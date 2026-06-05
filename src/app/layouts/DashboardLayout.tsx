@@ -112,6 +112,48 @@ export function DashboardLayout() {
               </Link>
             );
           })}
+
+          <div className={`pt-4 mt-4 border-t ${isAdmin ? 'border-gray-800/80' : 'border-gray-200/80'}`}>
+            <p className={`px-3 mb-2 text-xs font-semibold uppercase tracking-wider ${isAdmin ? 'text-gray-500' : 'text-gray-400'}`}>
+              Switch Portal
+            </p>
+            {!isCustomer && (
+              <Link
+                to="/customer/dashboard"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isAdmin ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                }`}
+              >
+                <Users className="size-4" />
+                <span>Customer Portal</span>
+              </Link>
+            )}
+            {!isSubagent && (
+              <Link
+                to="/subagent/dashboard"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isAdmin ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                }`}
+              >
+                <Building2 className="size-4" />
+                <span>Subagent Portal</span>
+              </Link>
+            )}
+            {!isAdmin && (
+              <Link
+                to="/admin/dashboard"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isAdmin ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-primary'
+                }`}
+              >
+                <Shield className="size-4" />
+                <span>Admin Portal</span>
+              </Link>
+            )}
+          </div>
         </nav>
 
         <div className={`p-4 border-t ${borderColor}`}>
