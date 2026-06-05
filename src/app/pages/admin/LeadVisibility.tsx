@@ -82,7 +82,7 @@ export function LeadVisibility() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
             <p className="text-sm text-gray-400">Total Leads</p>
             <p className="text-3xl font-semibold text-white mt-2">{leads.length}</p>
@@ -154,7 +154,7 @@ export function LeadVisibility() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Leads List */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className={`lg:col-span-2 space-y-3 ${selectedLead ? "hidden lg:block" : "block"}`}>
             {/* Search */}
             <div className="flex items-center bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
               <Search className="size-5 text-gray-400 mr-2" />
@@ -213,11 +213,19 @@ export function LeadVisibility() {
           </div>
 
           {/* Lead Details */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <div className={`bg-gray-800 rounded-xl border border-gray-700 p-6 ${selectedLead ? "block" : "hidden lg:block"}`}>
             {selectedLead ? (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-4">Lead Details</h2>
+                  <div className="flex items-center mb-4">
+                    <button
+                      onClick={() => setSelectedLead(null)}
+                      className="lg:hidden text-sm text-primary font-medium hover:underline flex items-center mr-2"
+                    >
+                      ← Back
+                    </button>
+                    <h2 className="text-xl font-semibold text-white">Lead Details</h2>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs text-gray-400">Customer</p>

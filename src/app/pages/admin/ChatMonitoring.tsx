@@ -86,7 +86,7 @@ export function ChatMonitoring() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -168,7 +168,7 @@ export function ChatMonitoring() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Conversations List */}
-          <div className="lg:col-span-2 space-y-3">
+          <div className={`lg:col-span-2 space-y-3 ${selectedConversation ? "hidden lg:block" : "block"}`}>
             {filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
@@ -217,13 +217,21 @@ export function ChatMonitoring() {
           </div>
 
           {/* Conversation Details */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 flex flex-col h-[600px]">
+          <div className={`bg-gray-800 rounded-xl border border-gray-700 flex flex-col h-[600px] ${selectedConversation ? "block" : "hidden lg:flex"}`}>
             {selectedConversation ? (
               <>
                 {/* Header */}
                 <div className="p-4 border-b border-gray-700">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-semibold text-white">Conversation Details</h2>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => setSelectedConversation(null)}
+                        className="lg:hidden text-sm text-primary font-medium hover:underline flex items-center mr-2"
+                      >
+                        ← Back
+                      </button>
+                      <h2 className="text-lg font-semibold text-white">Conversation Details</h2>
+                    </div>
                     {selectedConversation.flagged && (
                       <Badge variant="danger">
                         <Flag className="size-3 mr-1" />

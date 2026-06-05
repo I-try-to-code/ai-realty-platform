@@ -78,7 +78,7 @@ export function AddProperty() {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-between">
+        <div className="hidden md:flex items-center justify-between">
           {steps.map((step, index) => (
             <div key={step} className="flex items-center flex-1">
               <div className="flex items-center">
@@ -108,6 +108,24 @@ export function AddProperty() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Progress Steps (Mobile) */}
+        <div className="md:hidden bg-white p-4 rounded-xl border border-gray-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-gray-900">
+              Step {currentStep + 1} of {steps.length}: {steps[currentStep]}
+            </span>
+            <span className="text-xs text-gray-500 font-medium">
+              {Math.round(((currentStep + 1) / steps.length) * 100)}% Complete
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-primary h-full transition-all duration-300"
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            />
+          </div>
         </div>
 
         {/* Form Content */}

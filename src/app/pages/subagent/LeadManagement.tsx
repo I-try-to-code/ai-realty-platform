@@ -135,7 +135,7 @@ export function LeadManagement() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Leads List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={`lg:col-span-2 space-y-4 ${selectedLead ? "hidden lg:block" : "block"}`}>
             {/* Search */}
             <div className="flex items-center space-x-3">
               <div className="flex-1 flex items-center bg-white border border-gray-200 rounded-lg px-4 py-2">
@@ -212,13 +212,21 @@ export function LeadManagement() {
           </div>
 
           {/* Lead Details Sidebar */}
-          <div>
+          <div className={`${selectedLead ? "block" : "hidden lg:block"}`}>
             {selectedLead ? (
               <Card>
                 <div className="space-y-6">
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-semibold text-gray-900">Lead Details</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => setSelectedLead(null)}
+                          className="lg:hidden text-sm text-primary font-medium hover:underline flex items-center mr-2"
+                        >
+                          ← Back
+                        </button>
+                        <h2 className="text-xl font-semibold text-gray-900">Lead Details</h2>
+                      </div>
                       <Badge
                         variant={
                           selectedLead.status === "NEW" ? "info" :

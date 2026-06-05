@@ -197,13 +197,14 @@ export function KYCVerification() {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-sm text-gray-600">
             All documents will be reviewed by our admin team
           </p>
           <Button
             size="lg"
             variant="success"
+            className="w-full sm:w-auto"
             disabled={!documents.idProof || !documents.license}
           >
             Submit for Review

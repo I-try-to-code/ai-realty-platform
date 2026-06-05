@@ -68,7 +68,7 @@ export function PropertyDetails() {
       {/* Image Gallery */}
       <div className="bg-black">
         <div className="max-w-7xl mx-auto">
-          <div className="relative h-[500px]">
+          <div className="relative h-64 sm:h-[400px] lg:h-[500px]">
             <img
               src={propertyData.images[currentImage]}
               alt={propertyData.title}
@@ -102,7 +102,7 @@ export function PropertyDetails() {
               <button
                 key={index}
                 onClick={() => setCurrentImage(index)}
-                className={`h-24 rounded-lg overflow-hidden border-2 transition-all ${
+                className={`h-16 sm:h-24 rounded-lg overflow-hidden border-2 transition-all ${
                   currentImage === index ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
@@ -133,7 +133,7 @@ export function PropertyDetails() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-4 py-4 border-t border-gray-200">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-t border-gray-200">
                 <div className="flex items-center space-x-2">
                   <Bed className="size-5 text-gray-400" />
                   <div>

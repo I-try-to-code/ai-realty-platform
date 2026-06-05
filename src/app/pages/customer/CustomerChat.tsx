@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router";
-import { Send, Shield, Home, MapPin, Bed, Bath, Maximize } from "lucide-react";
+import { Send, Shield, Home, MapPin, Bed, Bath, Maximize, Info, X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
@@ -62,6 +62,7 @@ export function CustomerChat() {
   const { leadId } = useParams();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -86,9 +87,17 @@ export function CustomerChat() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-full bg-gray-50 overflow-hidden w-full relative">
+      {/* Sidebar Backdrop for Mobile */}
+      {showSidebar && (
+        <div
+          onClick={() => setShowSidebar(false)}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        />
+      )}
+
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
@@ -108,9 +117,18 @@ export function CustomerChat() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Shield className="size-4 text-accent" />
-              <span>Platform Monitored</span>
+            <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                <Shield className="size-4 text-accent" />
+                <span>Platform Monitored</span>
+              </div>
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none"
+                title="View Property Details"
+              >
+                <Info className="size-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -180,8 +198,21 @@ export function CustomerChat() {
       </div>
 
       {/* Property Sidebar */}
-      <aside className="w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto">
-        <h3 className="font-semibold text-gray-900 mb-4">Property Details</h3>
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto transform transition-transform duration-300 ease-in-out
+          lg:relative lg:inset-auto lg:z-auto lg:transform-none lg:block
+          ${showSidebar ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}
+      >
+        <div className="flex items-center justify-between lg:hidden mb-4">
+          <h3 className="font-semibold text-gray-900">Property Details</h3>
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="p-1 rounded-lg text-gray-500 hover:bg-gray-100"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
         <Link to={`/property/${propertyInfo.id}`}>
           <Card padding={false} hover>
             <img

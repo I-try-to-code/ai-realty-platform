@@ -74,7 +74,7 @@ export function SubagentApproval() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Subagents List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={`lg:col-span-2 space-y-4 ${selectedAgent ? "hidden lg:block" : "block"}`}>
             {pendingSubagents.map((agent) => (
               <div
                 key={agent.id}
@@ -150,11 +150,19 @@ export function SubagentApproval() {
           </div>
 
           {/* Document Viewer */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <div className={`bg-gray-800 rounded-xl border border-gray-700 p-6 ${selectedAgent ? "block" : "hidden lg:block"}`}>
             {selectedAgent ? (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-4">Documents</h2>
+                  <div className="flex items-center mb-4">
+                    <button
+                      onClick={() => setSelectedAgent(null)}
+                      className="lg:hidden text-sm text-primary font-medium hover:underline flex items-center mr-2"
+                    >
+                      ← Back
+                    </button>
+                    <h2 className="text-xl font-semibold text-white">Documents</h2>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <label className="block text-sm text-gray-400 mb-2">ID Proof</label>

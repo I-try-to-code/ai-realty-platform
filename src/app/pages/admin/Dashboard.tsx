@@ -72,7 +72,7 @@ export function AdminDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>

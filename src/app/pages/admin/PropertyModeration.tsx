@@ -97,7 +97,7 @@ export function PropertyModeration() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Properties List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={`lg:col-span-2 space-y-4 ${selectedProperty ? "hidden lg:block" : "block"}`}>
             {filteredProperties.map((property) => (
               <div
                 key={property.id}
@@ -108,11 +108,11 @@ export function PropertyModeration() {
                 }`}
                 onClick={() => setSelectedProperty(property)}
               >
-                <div className="flex">
+                <div className="flex flex-col sm:flex-row">
                   <img
                     src={property.image}
                     alt={property.title}
-                    className="w-48 h-48 object-cover"
+                    className="w-full sm:w-48 h-48 object-cover"
                   />
                   <div className="flex-1 p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -176,11 +176,19 @@ export function PropertyModeration() {
           </div>
 
           {/* Property Details */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+          <div className={`bg-gray-800 rounded-xl border border-gray-700 p-6 ${selectedProperty ? "block" : "hidden lg:block"}`}>
             {selectedProperty ? (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-white mb-4">Property Details</h2>
+                  <div className="flex items-center mb-4">
+                    <button
+                      onClick={() => setSelectedProperty(null)}
+                      className="lg:hidden text-sm text-primary font-medium hover:underline flex items-center mr-2"
+                    >
+                      ← Back
+                    </button>
+                    <h2 className="text-xl font-semibold text-white">Property Details</h2>
+                  </div>
                   <img
                     src={selectedProperty.image}
                     alt={selectedProperty.title}

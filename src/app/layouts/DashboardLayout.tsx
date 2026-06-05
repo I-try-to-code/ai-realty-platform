@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router";
 import {
   Home,
@@ -10,11 +11,16 @@ import {
   Shield,
   Eye,
   CheckCircle,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
+import { Badge } from "../components/Badge";
 
 export function DashboardLayout() {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const isCustomer = location.pathname.startsWith('/customer');
   const isSubagent = location.pathname.startsWith('/subagent');
   const isAdmin = location.pathname.startsWith('/admin');
@@ -45,12 +51,25 @@ export function DashboardLayout() {
   const bgColor = isAdmin ? 'bg-gray-900' : 'bg-white';
   const textColor = isAdmin ? 'text-gray-100' : 'text-gray-900';
   const mutedColor = isAdmin ? 'text-gray-400' : 'text-gray-600';
+  const borderColor = isAdmin ? 'border-gray-800' : 'border-gray-200';
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar Overlay for Mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity"
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`w-64 ${bgColor} border-r border-gray-200 flex flex-col`}>
-        <div className="p-6 border-b border-gray-200">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 ${bgColor} border-r ${borderColor} flex flex-col transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+      >
+        <div className={`p-6 border-b ${borderColor} flex items-center justify-between`}>
           <div className="flex items-center space-x-2">
             <div className="size-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
               <Home className="size-5 text-white" />
@@ -60,9 +79,16 @@ export function DashboardLayout() {
               <p className={`text-xs ${mutedColor}`}>{title}</p>
             </div>
           </div>
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+          >
+            <X className="size-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.path;
@@ -70,6 +96,7 @@ export function DashboardLayout() {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={() => setSidebarOpen(false)}
                 className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
                   isActive
                     ? isAdmin
@@ -87,9 +114,10 @@ export function DashboardLayout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className={`p-4 border-t ${borderColor}`}>
           <Link
             to="/"
+            onClick={() => setSidebarOpen(false)}
             className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
               isAdmin ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'
             }`}
@@ -100,10 +128,29 @@ export function DashboardLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 flex-shrink-0 z-30">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none"
+            >
+              <Menu className="size-6" />
+            </button>
+            <span className="font-semibold text-gray-900">AI Realty</span>
+            <Badge variant="info" size="sm">
+              {title}
+            </Badge>
+          </div>
+        </header>
+
+        {/* Dynamic Page Content */}
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
