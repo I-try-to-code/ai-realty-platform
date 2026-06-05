@@ -1,0 +1,401 @@
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router";
+import { Upload, MapPin, DollarSign, Home, CheckCircle2, X } from "lucide-react";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { Badge } from "../../components/Badge";
+
+const steps = ["Basic Info", "Details", "Amenities", "Images", "Review"];
+
+const amenitiesList = [
+  "Central Air Conditioning",
+  "Hardwood Floors",
+  "Granite Countertops",
+  "Stainless Steel Appliances",
+  "Walk-in Closets",
+  "Smart Home System",
+  "Energy Efficient",
+  "Private Backyard",
+  "Pool",
+  "Garage",
+  "Garden",
+  "Gym",
+  "Security System",
+];
+
+export function AddProperty() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEdit = !!id;
+  const [currentStep, setCurrentStep] = useState(0);
+  const [images, setImages] = useState<string[]>([]);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    propertyType: "house",
+    price: "",
+    location: "",
+    beds: "",
+    baths: "",
+    sqft: "",
+    garage: "",
+    yearBuilt: "",
+    description: "",
+    amenities: [] as string[],
+    furnishing: "unfurnished",
+  });
+
+  const handleImageUpload = () => {
+    const mockImages = [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
+    ];
+    setImages([...images, ...mockImages]);
+  };
+
+  const handleSubmit = () => {
+    navigate("/subagent/dashboard");
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setFormData({
+      ...formData,
+      amenities: formData.amenities.includes(amenity)
+        ? formData.amenities.filter((a) => a !== amenity)
+        : [...formData.amenities, amenity],
+    });
+  };
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isEdit ? "Edit Property" : "Add New Property"}
+          </h1>
+          <p className="text-gray-600 mt-1">Fill in the details to list your property</p>
+        </div>
+
+        {/* Progress Steps */}
+        <div className="flex items-center justify-between">
+          {steps.map((step, index) => (
+            <div key={step} className="flex items-center flex-1">
+              <div className="flex items-center">
+                <div
+                  className={`size-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                    index <= currentStep
+                      ? "bg-primary text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {index < currentStep ? <CheckCircle2 className="size-6" /> : index + 1}
+                </div>
+                <span
+                  className={`ml-2 text-sm font-medium ${
+                    index <= currentStep ? "text-gray-900" : "text-gray-500"
+                  }`}
+                >
+                  {step}
+                </span>
+              </div>
+              {index < steps.length - 1 && (
+                <div
+                  className={`flex-1 h-1 mx-4 rounded ${
+                    index < currentStep ? "bg-primary" : "bg-gray-200"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Form Content */}
+        <Card>
+          {/* Step 0: Basic Info */}
+          {currentStep === 0 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Basic Information</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Property Title
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Modern Family Home"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Property Type
+                  </label>
+                  <select
+                    value={formData.propertyType}
+                    onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="house">House</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="condo">Condo</option>
+                    <option value="townhouse">Townhouse</option>
+                    <option value="villa">Villa</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="850,000"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="San Francisco, CA"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 1: Details */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Property Details</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bedrooms
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.beds}
+                    onChange={(e) => setFormData({ ...formData, beds: e.target.value })}
+                    placeholder="4"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bathrooms
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.baths}
+                    onChange={(e) => setFormData({ ...formData, baths: e.target.value })}
+                    placeholder="3"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Square Feet
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.sqft}
+                    onChange={(e) => setFormData({ ...formData, sqft: e.target.value })}
+                    placeholder="2500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Garage</label>
+                  <input
+                    type="number"
+                    value={formData.garage}
+                    onChange={(e) => setFormData({ ...formData, garage: e.target.value })}
+                    placeholder="2"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Year Built
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.yearBuilt}
+                    onChange={(e) => setFormData({ ...formData, yearBuilt: e.target.value })}
+                    placeholder="2019"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Furnishing
+                  </label>
+                  <select
+                    value={formData.furnishing}
+                    onChange={(e) => setFormData({ ...formData, furnishing: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="unfurnished">Unfurnished</option>
+                    <option value="semi-furnished">Semi-Furnished</option>
+                    <option value="fully-furnished">Fully Furnished</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={5}
+                  placeholder="Describe the property features, location benefits, and unique selling points..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Amenities */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Amenities</h2>
+              <div className="grid md:grid-cols-3 gap-3">
+                {amenitiesList.map((amenity) => (
+                  <button
+                    key={amenity}
+                    onClick={() => toggleAmenity(amenity)}
+                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all text-left ${
+                      formData.amenities.includes(amenity)
+                        ? "border-primary bg-blue-50 text-primary"
+                        : "border-gray-200 text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {amenity}
+                      {formData.amenities.includes(amenity) && (
+                        <CheckCircle2 className="size-5 text-primary" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Images */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Property Images</h2>
+              <div className="grid md:grid-cols-3 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={image}
+                      alt={`Property ${index + 1}`}
+                      className="w-full h-40 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => setImages(images.filter((_, i) => i !== index))}
+                      className="absolute top-2 right-2 size-8 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="size-5 text-gray-700" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={handleImageUpload}
+                  className="h-40 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
+                >
+                  <Upload className="size-8 text-gray-400 mb-2" />
+                  <span className="text-sm text-gray-600">Upload Images</span>
+                </button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Upload high-quality images of your property. First image will be used as the cover.
+              </p>
+            </div>
+          )}
+
+          {/* Step 4: Review */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900">Review & Submit</h2>
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-600">Property Title</p>
+                    <p className="font-medium text-gray-900">{formData.title || "Not set"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Price</p>
+                    <p className="font-medium text-gray-900">${formData.price || "Not set"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Location</p>
+                    <p className="font-medium text-gray-900">{formData.location || "Not set"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Type</p>
+                    <p className="font-medium text-gray-900 capitalize">{formData.propertyType}</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">Selected Amenities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.amenities.map((amenity) => (
+                      <Badge key={amenity} variant="info" size="sm">{amenity}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">Images</p>
+                  <p className="font-medium text-gray-900">{images.length} images uploaded</p>
+                </div>
+              </div>
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-gray-700">
+                  Your property will be submitted for admin approval. You'll be notified once it's reviewed.
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+            disabled={currentStep === 0}
+          >
+            Previous
+          </Button>
+          {currentStep < steps.length - 1 ? (
+            <Button onClick={() => setCurrentStep(currentStep + 1)}>
+              Next
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} variant="success">
+              Submit for Approval
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,69 @@
+import { createBrowserRouter } from "react-router";
+
+// Customer Pages
+import { CustomerLanding } from "./pages/customer/Landing";
+import { PropertySearch } from "./pages/customer/PropertySearch";
+import { PropertyDetails } from "./pages/customer/PropertyDetails";
+import { AIChat } from "./pages/customer/AIChat";
+import { CustomerDashboard } from "./pages/customer/Dashboard";
+import { CustomerChat } from "./pages/customer/CustomerChat";
+
+// Subagent Pages
+import { SubagentDashboard } from "./pages/subagent/Dashboard";
+import { AddProperty } from "./pages/subagent/AddProperty";
+import { LeadManagement } from "./pages/subagent/LeadManagement";
+import { KYCVerification } from "./pages/subagent/KYCVerification";
+
+// Admin Pages
+import { AdminDashboard } from "./pages/admin/Dashboard";
+import { SubagentApproval } from "./pages/admin/SubagentApproval";
+import { PropertyModeration } from "./pages/admin/PropertyModeration";
+import { LeadVisibility } from "./pages/admin/LeadVisibility";
+import { ChatMonitoring } from "./pages/admin/ChatMonitoring";
+
+// Layouts
+import { CustomerLayout } from "./layouts/CustomerLayout";
+import { DashboardLayout } from "./layouts/DashboardLayout";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: CustomerLayout,
+    children: [
+      { index: true, Component: CustomerLanding },
+      { path: "search", Component: PropertySearch },
+      { path: "property/:id", Component: PropertyDetails },
+      { path: "ai-chat", Component: AIChat },
+    ],
+  },
+  {
+    path: "/customer",
+    Component: DashboardLayout,
+    children: [
+      { path: "dashboard", Component: CustomerDashboard },
+      { path: "chat/:leadId", Component: CustomerChat },
+    ],
+  },
+  {
+    path: "/subagent",
+    Component: DashboardLayout,
+    children: [
+      { path: "dashboard", Component: SubagentDashboard },
+      { path: "properties/add", Component: AddProperty },
+      { path: "properties/edit/:id", Component: AddProperty },
+      { path: "leads", Component: LeadManagement },
+      { path: "kyc", Component: KYCVerification },
+    ],
+  },
+  {
+    path: "/admin",
+    Component: DashboardLayout,
+    children: [
+      { path: "dashboard", Component: AdminDashboard },
+      { path: "approvals", Component: SubagentApproval },
+      { path: "moderation", Component: PropertyModeration },
+      { path: "leads", Component: LeadVisibility },
+      { path: "monitoring", Component: ChatMonitoring },
+    ],
+  },
+]);
