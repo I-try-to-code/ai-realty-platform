@@ -170,4 +170,48 @@ router.put("/:id/unlock", authenticateToken, async (req: AuthRequest, res: Respo
   }
 });
 
+/**
+ * PUT /api/leads/:id/status
+ * Update lead status (Restricted to SUBAGENT or ADMIN)
+ */
+router.put("/:id/status", authenticateToken, async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status || !Object.values(LeadStatus).includes(status)) {
+    return res.status(400).json({ error: "Invalid lead status." });
+  }
+
+  try {
+    const lead = await prisma.lead.findUnique({
+      where: { id }
+    });
+
+    if (!lead) {
+      return res.status(404).json({ error: "Lead not found." });
+    }
+
+    if (lead.subagentId !== req.user!.id && req.user!.role !== "ADMIN") {
+      return res.status(403).json({ error: "Unauthorized. This lead is assigned to another agent." });
+    }
+
+    const updatedLead = await prisma.lead.update({
+      where: { id },
+      data: { status: status as LeadStatus },
+      include: {
+        property: { include: { locality: true } },
+        customer: { select: { id: true, name: true, email: true, phone: true } }
+      }
+    });
+
+    return res.json({
+      message: "Lead status updated successfully!",
+      lead: updatedLead
+    });
+  } catch (error) {
+    console.error("[lead status update error]", error);
+    return res.status(500).json({ error: "Failed to update lead status." });
+  }
+});
+
 export default router;

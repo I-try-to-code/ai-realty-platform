@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router";
 import {
   Heart,
   Share2,
@@ -14,54 +14,149 @@ import {
   School,
   ShoppingCart,
   Coffee,
-  Train
+  Train,
+  LogOut
 } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
 
-const propertyData = {
-  id: "1",
-  images: [
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200",
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200",
-    "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200",
-  ],
-  price: "$850,000",
-  title: "Modern Family Home",
-  location: "123 Oak Street, San Francisco, CA 94102",
-  beds: 4,
-  baths: 3,
-  sqft: 2500,
-  garage: 2,
-  yearBuilt: 2019,
-  propertyType: "Single Family Home",
-  aiScore: 95,
-  description:
-    "Beautiful modern home in a prime location. Features open floor plan, chef's kitchen with premium appliances, hardwood floors throughout, and a spacious backyard perfect for entertaining. Recently renovated with high-end finishes.",
-  amenities: [
-    "Central Air Conditioning",
-    "Hardwood Floors",
-    "Granite Countertops",
-    "Stainless Steel Appliances",
-    "Walk-in Closets",
-    "Smart Home System",
-    "Energy Efficient",
-    "Private Backyard",
-  ],
-  nearbyPlaces: [
-    { name: "Lincoln Elementary School", distance: "0.3 mi", icon: School },
-    { name: "Whole Foods Market", distance: "0.5 mi", icon: ShoppingCart },
-    { name: "Golden Gate Park", distance: "0.8 mi", icon: Coffee },
-    { name: "BART Station", distance: "1.2 mi", icon: Train },
-  ],
-};
-
 export function PropertyDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [property, setProperty] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [interestSubmitting, setInterestSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadPropertyDetails() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/properties/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProperty(data);
+        } else {
+          console.error("Property not found");
+        }
+      } catch (err) {
+        console.error("Failed to load property details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPropertyDetails();
+  }, [id]);
+
+  const handleExpressInterest = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please sign in to express interest in this property.");
+      navigate("/login");
+      return;
+    }
+
+    const primaryAgent = property.agents?.find((a: any) => a.primaryAgent)?.subagent || property.agents?.[0]?.subagent;
+
+    setInterestSubmitting(true);
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          propertyId: property.id,
+          subagentId: primaryAgent?.id
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Interest submitted! An inquiry conversation has been successfully started.");
+        navigate("/customer/dashboard");
+      } else {
+        alert(data.error || "Failed to submit interest.");
+      }
+    } catch (err) {
+      console.error("Error submitting interest:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setInterestSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-20">
+        <p className="text-gray-500 text-lg mb-4">Property not found</p>
+        <Link to="/customer/search">
+          <Button>Back to Search</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const images = property.media && property.media.length > 0
+    ? property.media.map((m: any) => m.url)
+    : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"];
+
+  const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+  const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
+  const amenities = property.amenities?.map((a: any) => a.amenity.name) || [];
+  const hasGarage = amenities.some((name: string) => name.toLowerCase().includes("garage")) ? "Yes" : "No";
+
+  const primaryAgentRelation = property.agents?.find((a: any) => a.primaryAgent) || property.agents?.[0];
+  const agent = primaryAgentRelation?.subagent;
+  const agentName = agent?.name || "John Doe";
+  const agentInitials = agentName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase();
+
+  const nearbyPlaces: any[] = [];
+  if (property.locality?.poi) {
+    const poi = typeof property.locality.poi === "string"
+      ? JSON.parse(property.locality.poi)
+      : property.locality.poi;
+    
+    if (poi && typeof poi === "object") {
+      if (Array.isArray(poi.schools)) {
+        poi.schools.forEach((s: string) => nearbyPlaces.push({ name: s, icon: School, distance: "0.5 miles" }));
+      }
+      if (Array.isArray(poi.parks)) {
+        poi.parks.forEach((p: string) => nearbyPlaces.push({ name: p, icon: Coffee, distance: "0.2 miles" }));
+      }
+      if (Array.isArray(poi.transport)) {
+        poi.transport.forEach((t: string) => nearbyPlaces.push({ name: t, icon: Train, distance: "0.4 miles" }));
+      }
+      if (Array.isArray(poi.shopping)) {
+        poi.shopping.forEach((sh: string) => nearbyPlaces.push({ name: sh, icon: ShoppingCart, distance: "0.6 miles" }));
+      }
+      if (Array.isArray(poi.dining)) {
+        poi.dining.forEach((d: string) => nearbyPlaces.push({ name: d, icon: Coffee, distance: "0.3 miles" }));
+      }
+    }
+  }
+
+  if (nearbyPlaces.length === 0) {
+    nearbyPlaces.push(
+      { name: "Central Park", icon: Coffee, distance: "0.5 miles" },
+      { name: "Downtown School", icon: School, distance: "1.2 miles" }
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
@@ -70,8 +165,8 @@ export function PropertyDetails() {
         <div className="max-w-7xl mx-auto">
           <div className="relative h-64 sm:h-[400px] lg:h-[500px]">
             <img
-              src={propertyData.images[currentImage]}
-              alt={propertyData.title}
+              src={images[currentImage]}
+              alt={property.title}
               className="size-full object-cover"
             />
             <div className="absolute top-4 right-4 flex space-x-2">
@@ -86,7 +181,7 @@ export function PropertyDetails() {
               </button>
             </div>
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {propertyData.images.map((_, index) => (
+              {images.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImage(index)}
@@ -98,7 +193,7 @@ export function PropertyDetails() {
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2 p-2">
-            {propertyData.images.map((image, index) => (
+            {images.map((image, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImage(index)}
@@ -121,15 +216,17 @@ export function PropertyDetails() {
             <Card>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{propertyData.title}</h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
                   <div className="flex items-center text-gray-600">
                     <MapPin className="size-5 mr-2" />
-                    {propertyData.location}
+                    {propertyLocation}
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold text-gray-900">{propertyData.price}</p>
-                  <Badge variant="info" size="sm" className="mt-2">For Sale</Badge>
+                  <p className="text-3xl font-bold text-gray-900">{formattedPrice}</p>
+                  <Badge variant="info" size="sm" className="mt-2">
+                    {property.listingType === "RENT" ? "For Rent" : "For Sale"}
+                  </Badge>
                 </div>
               </div>
 
@@ -138,28 +235,28 @@ export function PropertyDetails() {
                   <Bed className="size-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Bedrooms</p>
-                    <p className="font-semibold">{propertyData.beds}</p>
+                    <p className="font-semibold">{property.beds || 0}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Bath className="size-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Bathrooms</p>
-                    <p className="font-semibold">{propertyData.baths}</p>
+                    <p className="font-semibold">{property.baths || 0}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Maximize className="size-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Sqft</p>
-                    <p className="font-semibold">{propertyData.sqft}</p>
+                    <p className="font-semibold">{property.sqft || 0}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Car className="size-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Garage</p>
-                    <p className="font-semibold">{propertyData.garage}</p>
+                    <p className="font-semibold">{hasGarage}</p>
                   </div>
                 </div>
               </div>
@@ -174,7 +271,7 @@ export function PropertyDetails() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-900">AI Match Score</h3>
-                    <Badge variant="ai">{propertyData.aiScore}% Match</Badge>
+                    <Badge variant="ai">95% Match</Badge>
                   </div>
                   <h4 className="font-medium text-gray-900 mb-2">Why this property suits you:</h4>
                   <ul className="space-y-2">
@@ -210,37 +307,39 @@ export function PropertyDetails() {
             {/* Description */}
             <Card>
               <h3 className="font-semibold text-gray-900 mb-3">About this property</h3>
-              <p className="text-gray-700 leading-relaxed">{propertyData.description}</p>
+              <p className="text-gray-700 leading-relaxed">{property.description || "No description available."}</p>
               <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
                 <div>
                   <p className="text-sm text-gray-600">Property Type</p>
-                  <p className="font-medium">{propertyData.propertyType}</p>
+                  <p className="font-medium capitalize">{property.propertyType.toLowerCase()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Year Built</p>
-                  <p className="font-medium">{propertyData.yearBuilt}</p>
+                  <p className="font-medium">2020</p>
                 </div>
               </div>
             </Card>
 
             {/* Amenities */}
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-4">Amenities</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {propertyData.amenities.map((amenity, index) => (
-                  <div key={index} className="flex items-center">
-                    <CheckCircle2 className="size-5 text-accent mr-2" />
-                    <span className="text-gray-700">{amenity}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            {amenities.length > 0 && (
+              <Card>
+                <h3 className="font-semibold text-gray-900 mb-4">Amenities</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {amenities.map((amenity: string, index: number) => (
+                    <div key={index} className="flex items-center">
+                      <CheckCircle2 className="size-5 text-accent mr-2" />
+                      <span className="text-gray-700">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
             {/* Nearby Places */}
             <Card>
               <h3 className="font-semibold text-gray-900 mb-4">Nearby Places</h3>
               <div className="space-y-3">
-                {propertyData.nearbyPlaces.map((place, index) => {
+                {nearbyPlaces.map((place: any, index: number) => {
                   const Icon = place.icon;
                   return (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -267,9 +366,14 @@ export function PropertyDetails() {
                 Express your interest and our AI will connect you with a verified agent
               </p>
               <div className="space-y-3">
-                <Button className="w-full" size="lg">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleExpressInterest}
+                  disabled={interestSubmitting}
+                >
                   <Sparkles className="size-4 mr-2" />
-                  I'm Interested
+                  {interestSubmitting ? "Submitting..." : "I'm Interested"}
                 </Button>
                 <Button variant="outline" className="w-full">
                   <Calendar className="size-4 mr-2" />
@@ -294,10 +398,10 @@ export function PropertyDetails() {
             <Card>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="size-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  JD
+                  {agentInitials}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">John Doe</p>
+                  <p className="font-semibold text-gray-900">{agentName}</p>
                   <p className="text-sm text-gray-600">Verified Agent</p>
                 </div>
               </div>

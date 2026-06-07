@@ -149,7 +149,7 @@ model Property {
   isVerified      Boolean           @default(false)
   beds            Int?
   baths           Int?
-  sqft            Int?
+  sqft            Float?
   approvedBy      String?
   approvedAt      DateTime?
   agents          PropertyAgent[]

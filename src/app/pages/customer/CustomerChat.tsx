@@ -1,93 +1,172 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router";
-import { Send, Shield, Home, MapPin, Bed, Bath, Maximize, Info, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useParams, Link, useNavigate } from "react-router";
+import { Send, Shield, MapPin, Bed, Bath, Maximize, Info, X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
 import { Card } from "../../components/Card";
 
-interface Message {
-  sender: "customer" | "agent";
-  content: string;
-  timestamp: string;
-}
-
-const propertyInfo = {
-  id: "1",
-  image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-  price: "$850,000",
-  title: "Modern Family Home",
-  location: "San Francisco, CA",
-  beds: 4,
-  baths: 3,
-  sqft: 2500,
-};
-
-const agentInfo = {
-  name: "John Doe",
-  role: "Senior Real Estate Agent",
-  verified: true,
-};
-
-const initialMessages: Message[] = [
-  {
-    sender: "agent",
-    content: "Hello! I'm John, and I'll be helping you with this property. What would you like to know about it?",
-    timestamp: "10:30 AM",
-  },
-  {
-    sender: "customer",
-    content: "Hi John! I'm interested in scheduling a viewing. When would be a good time?",
-    timestamp: "10:32 AM",
-  },
-  {
-    sender: "agent",
-    content:
-      "Great! I have availability this Thursday at 2 PM or Friday at 10 AM. Which works better for you?",
-    timestamp: "10:35 AM",
-  },
-  {
-    sender: "customer",
-    content: "Thursday at 2 PM sounds perfect. Also, are there good schools nearby?",
-    timestamp: "10:36 AM",
-  },
-  {
-    sender: "agent",
-    content:
-      "Excellent! Thursday at 2 PM it is. Yes, there are several top-rated schools within a 5-minute walk, including Lincoln Elementary which is one of the best in the district.",
-    timestamp: "10:38 AM",
-  },
-];
-
 export function CustomerChat() {
   const { leadId } = useParams();
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const navigate = useNavigate();
+  const [session, setSession] = useState<any>(null);
+  const [lead, setLead] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [input, setInput] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const token = localStorage.getItem("token");
+  let currentUserId = "";
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      currentUserId = payload.id;
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
-    const newMessage: Message = {
-      sender: "customer",
-      content: input,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages([...messages, newMessage]);
-    setInput("");
-
-    setTimeout(() => {
-      const agentReply: Message = {
-        sender: "agent",
-        content: "Thank you for your message. I'll get back to you shortly with that information.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, agentReply]);
-    }, 1500);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (!token) {
+      alert("Please login first.");
+      navigate("/login");
+      return;
+    }
+
+    async function loadChatDetails() {
+      setLoading(true);
+      try {
+        const sessionRes = await fetch(`/api/messages/lead/${leadId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          setSession(sessionData.session);
+          setLead(sessionData.lead);
+
+          const messagesRes = await fetch(`/api/messages/${sessionData.session.id}`, {
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+          if (messagesRes.ok) {
+            const messagesData = await messagesRes.json();
+            setMessages(messagesData);
+          }
+        } else {
+          console.error("Failed to load session details");
+        }
+      } catch (err) {
+        console.error("Failed to load chat details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadChatDetails();
+  }, [leadId, token]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/messages/${session.id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setMessages(data);
+        }
+      } catch (err) {
+        console.error("Error polling messages:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [session, token]);
+
+  const handleSend = async () => {
+    if (!input.trim() || !session) return;
+
+    const tempInput = input;
+    setInput("");
+
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          sessionId: session.id,
+          content: tempInput
+        })
+      });
+
+      if (res.ok) {
+        const newMessage = await res.json();
+        setMessages((prev) => [...prev, newMessage]);
+      } else {
+        alert("Failed to send message.");
+        setInput(tempInput);
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+      alert("Failed to send message.");
+      setInput(tempInput);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-full min-h-screen bg-gray-50 items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!session || !lead) {
+    return (
+      <div className="flex flex-col h-full min-h-screen bg-gray-50 items-center justify-center">
+        <p className="text-gray-500 mb-4">Chat conversation not found.</p>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      </div>
+    );
+  }
+
+  // Determine chat partner
+  const isCustomer = lead.customerId === currentUserId;
+  const chatPartnerName = isCustomer
+    ? (lead.subagent?.name || "Verified Agent")
+    : (lead.customer?.name || "Customer");
+  const chatPartnerRole = isCustomer ? "Verified Agent" : "Lead Customer";
+  const chatPartnerInitials = chatPartnerName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase();
+
+  const property = lead.property;
+  const propertyImage = property.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400";
+  const propertyPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+  const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
+
   return (
-    <div className="flex h-full bg-gray-50 overflow-hidden w-full relative">
+    <div className="flex h-full bg-gray-50 overflow-hidden w-full relative min-h-screen">
       {/* Sidebar Backdrop for Mobile */}
       {showSidebar && (
         <div
@@ -97,23 +176,21 @@ export function CustomerChat() {
       )}
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="size-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                JD
+                {chatPartnerInitials}
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{agentInfo.name}</h2>
+                <h2 className="font-semibold text-gray-900">{chatPartnerName}</h2>
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm text-gray-600">{agentInfo.role}</p>
-                  {agentInfo.verified && (
-                    <Badge variant="success" size="sm">
-                      Verified
-                    </Badge>
-                  )}
+                  <p className="text-sm text-gray-600">{chatPartnerRole}</p>
+                  <Badge variant="success" size="sm">
+                    Active
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -142,41 +219,47 @@ export function CustomerChat() {
               <div>
                 <p className="text-sm font-medium text-gray-900">Secure Conversation</p>
                 <p className="text-xs text-gray-600 mt-1">
-                  Your contact information is protected. All messages are monitored by our platform to ensure quality
-                  and safety. The agent cannot see your email or phone number until you choose to share it.
+                  Your contact details are protected. Messages are logged to maintain quality and safety.
+                  {!lead.isUnlocked && !isCustomer && " Unlock contact details to view the customer's phone/email."}
+                  {!lead.isUnlocked && isCustomer && " The agent cannot see your contact info until unlocked."}
                 </p>
               </div>
             </div>
           </div>
 
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.sender === "customer" ? "justify-end" : "justify-start"}`}
-            >
-              <div className={`max-w-md ${message.sender === "customer" ? "ml-12" : "mr-12"}`}>
-                {message.sender === "agent" && (
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-xs text-gray-600">{agentInfo.name}</span>
+          {messages.map((message, index) => {
+            const isMe = message.senderId === currentUserId;
+            const msgSenderName = isMe ? "You" : (message.sender?.name || "Partner");
+            return (
+              <div
+                key={index}
+                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+              >
+                <div className={`max-w-md ${isMe ? "ml-12" : "mr-12"}`}>
+                  {!isMe && (
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-xs text-gray-600">{msgSenderName}</span>
+                    </div>
+                  )}
+                  <div
+                    className={`rounded-2xl px-4 py-3 ${
+                      isMe
+                        ? "bg-primary text-white"
+                        : "bg-white border border-gray-200"
+                    }`}
+                  >
+                    <p className={isMe ? "text-white" : "text-gray-700 whitespace-pre-wrap"}>
+                      {message.content}
+                    </p>
                   </div>
-                )}
-                <div
-                  className={`rounded-2xl px-4 py-3 ${
-                    message.sender === "customer"
-                      ? "bg-primary text-white"
-                      : "bg-white border border-gray-200"
-                  }`}
-                >
-                  <p className={message.sender === "customer" ? "text-white" : "text-gray-700"}>
-                    {message.content}
+                  <p className="text-xs text-gray-500 mt-1 px-1">
+                    {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 px-1">
-                  {message.timestamp}
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
@@ -200,7 +283,7 @@ export function CustomerChat() {
       {/* Property Sidebar */}
       <aside
         className={`fixed inset-y-0 right-0 z-50 w-80 bg-white border-l border-gray-200 p-6 overflow-y-auto transform transition-transform duration-300 ease-in-out
-          lg:relative lg:inset-auto lg:z-auto lg:transform-none lg:block
+          lg:relative lg:inset-auto lg:z-auto lg:transform-none lg:block h-screen
           ${showSidebar ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}
       >
         <div className="flex items-center justify-between lg:hidden mb-4">
@@ -213,32 +296,32 @@ export function CustomerChat() {
           </button>
         </div>
 
-        <Link to={`/property/${propertyInfo.id}`}>
+        <Link to={`/property/${property.id}`}>
           <Card padding={false} hover>
             <img
-              src={propertyInfo.image}
-              alt={propertyInfo.title}
+              src={propertyImage}
+              alt={property.title}
               className="w-full h-40 object-cover rounded-t-xl"
             />
             <div className="p-4">
-              <p className="text-xl font-semibold text-gray-900">{propertyInfo.price}</p>
-              <h4 className="font-medium text-gray-900 mt-2">{propertyInfo.title}</h4>
+              <p className="text-xl font-semibold text-gray-900">{propertyPrice}</p>
+              <h4 className="font-medium text-gray-900 mt-2">{property.title}</h4>
               <div className="flex items-center text-sm text-gray-600 mt-1">
                 <MapPin className="size-4 mr-1" />
-                {propertyInfo.location}
+                {propertyLocation}
               </div>
               <div className="flex items-center space-x-3 text-sm text-gray-600 mt-3 pt-3 border-t border-gray-100">
                 <span className="flex items-center">
                   <Bed className="size-4 mr-1" />
-                  {propertyInfo.beds}
+                  {property.beds || 0}
                 </span>
                 <span className="flex items-center">
                   <Bath className="size-4 mr-1" />
-                  {propertyInfo.baths}
+                  {property.baths || 0}
                 </span>
                 <span className="flex items-center">
                   <Maximize className="size-4 mr-1" />
-                  {propertyInfo.sqft}
+                  {property.sqft || 0}
                 </span>
               </div>
             </div>
@@ -261,10 +344,10 @@ export function CustomerChat() {
         </div>
 
         <div className="mt-6 p-4 bg-green-50 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-2">Conversation Status</h4>
-          <Badge variant="success" size="sm">Active</Badge>
+          <h4 className="font-medium text-gray-900 mb-2">Lead Status</h4>
+          <Badge variant="success" size="sm">{lead.status}</Badge>
           <p className="text-xs text-gray-600 mt-2">
-            This conversation is being monitored by our platform to ensure quality and transparency.
+            This lead status determines current follow-up progress. It is synchronized live on both agent and customer dashboards.
           </p>
         </div>
       </aside>
