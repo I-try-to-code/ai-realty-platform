@@ -43,6 +43,35 @@ router.get("/sessions", authenticateToken, async (req: AuthRequest, res: Respons
 });
 
 /**
+ * GET /api/messages/admin/monitor
+ * Retrieve all chat sessions on the platform for admin auditing (Restricted to ADMIN)
+ */
+router.get("/admin/monitor", authenticateToken, authorizeRoles("ADMIN"), async (req: AuthRequest, res: Response) => {
+  try {
+    const sessions = await prisma.chatSession.findMany({
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: { id: true, name: true, role: true }
+            }
+          }
+        },
+        messages: {
+          orderBy: { createdAt: "desc" }
+        }
+      },
+      orderBy: { updatedAt: "desc" }
+    });
+
+    return res.json(sessions);
+  } catch (error) {
+    console.error("[admin monitor sessions error]", error);
+    return res.status(500).json({ error: "Failed to retrieve chat sessions for monitoring." });
+  }
+});
+
+/**
  * GET /api/messages/lead/:leadId
  * Retrieve or create a chat session associated with a lead
  */

@@ -4,6 +4,7 @@ import propertiesRoutes from "./properties";
 import leadsRoutes from "./leads";
 import messagesRoutes from "./messages";
 import kycRoutes from "./kyc";
+import adminRoutes from "./admin";
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use("/properties", propertiesRoutes);
 router.use("/leads", leadsRoutes);
 router.use("/messages", messagesRoutes);
 router.use("/kyc", kycRoutes);
+router.use("/admin", adminRoutes);
 
 export default router;
