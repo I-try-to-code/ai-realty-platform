@@ -147,6 +147,9 @@ model Property {
   propertyType    PropertyType
   listingType     ListingType
   isVerified      Boolean           @default(false)
+  beds            Int?
+  baths           Int?
+  sqft            Int?
   approvedBy      String?
   approvedAt      DateTime?
   agents          PropertyAgent[]

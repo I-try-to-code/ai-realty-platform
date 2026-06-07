@@ -1,85 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, MapPin, Sparkles, X } from "lucide-react";
 import { PropertyCard } from "../../components/PropertyCard";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
 
-const properties = [
-  {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-    price: "$850,000",
-    title: "Modern Family Home",
-    location: "San Francisco, CA",
-    beds: 4,
-    baths: 3,
-    sqft: 2500,
-    aiScore: 95,
-    aiReason: "Matches your preference for modern architecture"
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
-    price: "$1,200,000",
-    title: "Luxury Penthouse",
-    location: "Los Angeles, CA",
-    beds: 3,
-    baths: 2,
-    sqft: 1800,
-    aiScore: 88,
-    aiReason: "City views match your lifestyle"
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
-    price: "$650,000",
-    title: "Suburban Retreat",
-    location: "Austin, TX",
-    beds: 3,
-    baths: 2,
-    sqft: 2200,
-    aiScore: 82,
-    aiReason: "Quiet neighborhood with excellent schools"
-  },
-  {
-    id: "4",
-    image: "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800",
-    price: "$950,000",
-    title: "Contemporary Villa",
-    location: "Miami, FL",
-    beds: 5,
-    baths: 4,
-    sqft: 3200,
-    aiScore: 78,
-  },
-  {
-    id: "5",
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
-    price: "$720,000",
-    title: "Cozy Townhouse",
-    location: "Seattle, WA",
-    beds: 3,
-    baths: 2,
-    sqft: 1900,
-  },
-  {
-    id: "6",
-    image: "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800",
-    price: "$1,450,000",
-    title: "Beachfront Property",
-    location: "San Diego, CA",
-    beds: 4,
-    baths: 3,
-    sqft: 2800,
-    aiScore: 91,
-    aiReason: "Ocean views and beachfront access"
-  },
-];
-
 export function PropertySearch() {
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState<string>("all");
   const [bedrooms, setBedrooms] = useState<string>("all");
+
+  useEffect(() => {
+    async function loadProperties() {
+      setLoading(true);
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.append("status", "ACTIVE");
+        
+        const res = await fetch(`/api/properties?${queryParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProperties(data);
+        }
+      } catch (err) {
+        console.error("Failed to load properties:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProperties();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -226,11 +177,39 @@ export function PropertySearch() {
               </Button>
             </div>
 
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <PropertyCard key={property.id} {...property} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
+                <p className="text-gray-500">No active properties found matching your search.</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {properties.map((property: any) => {
+                  const imageUrl = property.media && property.media[0] ? property.media[0].url : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800";
+                  const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+                  const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
+                  
+                  return (
+                    <PropertyCard
+                      key={property.id}
+                      id={property.id}
+                      image={imageUrl}
+                      price={formattedPrice}
+                      title={property.title}
+                      location={propertyLocation}
+                      beds={property.beds || 0}
+                      baths={property.baths || 0}
+                      sqft={property.sqft || 0}
+                      aiScore={92} 
+                      aiReason="Matches your search preferences."
+                    />
+                  );
+                })}
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="flex flex-wrap justify-center mt-8 gap-2">

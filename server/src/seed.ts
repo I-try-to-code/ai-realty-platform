@@ -162,7 +162,10 @@ async function main() {
       status: PropertyStatus.ACTIVE,
       propertyType: PropertyType.VILLA,
       listingType: ListingType.SALE,
-      isVerified: true
+      isVerified: true,
+      beds: 4,
+      baths: 3,
+      sqft: 2500
     }
   });
 
@@ -178,7 +181,10 @@ async function main() {
       status: PropertyStatus.ACTIVE,
       propertyType: PropertyType.APARTMENT,
       listingType: ListingType.SALE,
-      isVerified: true
+      isVerified: true,
+      beds: 3,
+      baths: 2,
+      sqft: 1800
     }
   });
 
@@ -194,7 +200,10 @@ async function main() {
       status: PropertyStatus.PENDING_APPROVAL,
       propertyType: PropertyType.VILLA,
       listingType: ListingType.SALE,
-      isVerified: false
+      isVerified: false,
+      beds: 3,
+      baths: 2,
+      sqft: 2200
     }
   });
 
