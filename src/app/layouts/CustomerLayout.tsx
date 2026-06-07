@@ -1,12 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { Outlet, Link, useLocation } from "react-router";
-import { Home, Search, MessageSquare, User, Sparkles, Menu, X, ChevronDown, Shield, Building2 } from "lucide-react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import { Home, Search, MessageSquare, User, Sparkles, Menu, X, ChevronDown, Shield, Building2, LogOut } from "lucide-react";
 
 export function CustomerLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [portalDropdownOpen, setPortalDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const userJson = localStorage.getItem("user");
+  const currentUser = userJson ? JSON.parse(userJson) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setPortalDropdownOpen(false);
+    navigate("/");
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -58,45 +69,67 @@ export function CustomerLayout() {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-4 relative" ref={dropdownRef}>
-              <button
-                onClick={() => setPortalDropdownOpen(!portalDropdownOpen)}
-                className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none"
-              >
-                <User className="size-4" />
-                <span>Portals</span>
-                <ChevronDown className={`size-4 transition-transform duration-200 ${portalDropdownOpen ? "rotate-180" : ""}`} />
-              </button>
+              {currentUser ? (
+                <>
+                  <button
+                    onClick={() => setPortalDropdownOpen(!portalDropdownOpen)}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none"
+                  >
+                    <User className="size-4" />
+                    <span>{currentUser.name || "My Account"}</span>
+                    <ChevronDown className={`size-4 transition-transform duration-200 ${portalDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
 
-              {portalDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in-50 slide-in-from-top-1 duration-150">
-                  <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 border-b border-gray-100 mb-1">
-                    Switch Dashboard
-                  </div>
-                  <Link
-                    to="/customer/dashboard"
-                    onClick={() => setPortalDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
-                  >
-                    <User className="size-4 text-gray-500" />
-                    <span>Customer Portal</span>
-                  </Link>
-                  <Link
-                    to="/subagent/dashboard"
-                    onClick={() => setPortalDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
-                  >
-                    <Building2 className="size-4 text-gray-500" />
-                    <span>Subagent Portal</span>
-                  </Link>
-                  <Link
-                    to="/admin/dashboard"
-                    onClick={() => setPortalDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
-                  >
-                    <Shield className="size-4 text-gray-500" />
-                    <span>Admin Portal</span>
-                  </Link>
-                </div>
+                  {portalDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in-50 slide-in-from-top-1 duration-150">
+                      <div className="px-4 py-1.5 border-b border-gray-100 mb-1">
+                        <p className="text-xs font-semibold text-gray-900">{currentUser.name}</p>
+                        <p className="text-[10px] text-gray-500 truncate">{currentUser.email}</p>
+                      </div>
+                      <Link
+                        to="/customer/dashboard"
+                        onClick={() => setPortalDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
+                      >
+                        <User className="size-4 text-gray-500" />
+                        <span>Customer Portal</span>
+                      </Link>
+                      <Link
+                        to="/subagent/dashboard"
+                        onClick={() => setPortalDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
+                      >
+                        <Building2 className="size-4 text-gray-500" />
+                        <span>Subagent Portal</span>
+                      </Link>
+                      <Link
+                        to="/admin/dashboard"
+                        onClick={() => setPortalDropdownOpen(false)}
+                        className="flex items-center space-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors"
+                      >
+                        <Shield className="size-4 text-gray-500" />
+                        <span>Admin Portal</span>
+                      </Link>
+                      <div className="border-t border-gray-100 mt-1 pt-1">
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center space-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <LogOut className="size-4" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/95 shadow-sm transition-colors"
+                >
+                  <User className="size-4" />
+                  <span>Sign In</span>
+                </Link>
               )}
             </div>
 
@@ -134,35 +167,56 @@ export function CustomerLayout() {
                 </Link>
               );
             })}
-            <div className="border-t border-gray-100 my-2 pt-2">
-              <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Portals
+            {currentUser ? (
+              <div className="border-t border-gray-100 my-2 pt-2">
+                <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Account: {currentUser.name}
+                </div>
+                <Link
+                  to="/customer/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
+                >
+                  <User className="size-5 text-gray-400" />
+                  <span>Customer Portal</span>
+                </Link>
+                <Link
+                  to="/subagent/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
+                >
+                  <Building2 className="size-5 text-gray-400" />
+                  <span>Subagent Portal</span>
+                </Link>
+                <Link
+                  to="/admin/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
+                >
+                  <Shield className="size-5 text-gray-400" />
+                  <span>Admin Portal</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex w-full items-center space-x-2 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer mt-2"
+                >
+                  <LogOut className="size-5 text-red-400" />
+                  <span>Logout</span>
+                </button>
               </div>
+            ) : (
               <Link
-                to="/customer/dashboard"
+                to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
+                className="flex items-center justify-center space-x-2 px-3 py-3 rounded-lg bg-primary text-white hover:bg-primary/95 text-center font-medium shadow-sm transition-colors mt-4"
               >
-                <User className="size-5 text-gray-400" />
-                <span>Customer Portal</span>
+                <User className="size-5" />
+                <span>Sign In</span>
               </Link>
-              <Link
-                to="/subagent/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
-              >
-                <Building2 className="size-5 text-gray-400" />
-                <span>Subagent Portal</span>
-              </Link>
-              <Link
-                to="/admin/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center space-x-2 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
-              >
-                <Shield className="size-5 text-gray-400" />
-                <span>Admin Portal</span>
-              </Link>
-            </div>
+            )}
           </div>
         )}
       </nav>

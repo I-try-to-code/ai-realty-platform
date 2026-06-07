@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
   Home,
   LayoutDashboard,
@@ -19,7 +19,14 @@ import { Badge } from "../components/Badge";
 
 export function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   const isCustomer = location.pathname.startsWith('/customer');
   const isSubagent = location.pathname.startsWith('/subagent');
@@ -157,16 +164,15 @@ export function DashboardLayout() {
         </nav>
 
         <div className={`p-4 border-t ${borderColor}`}>
-          <Link
-            to="/"
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
+          <button
+            onClick={handleLogout}
+            className={`flex w-full items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left focus:outline-none ${
               isAdmin ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
             <LogOut className="size-5" />
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </aside>
 

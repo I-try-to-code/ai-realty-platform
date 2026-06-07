@@ -25,7 +25,14 @@ import { ChatMonitoring } from "./pages/admin/ChatMonitoring";
 import { CustomerLayout } from "./layouts/CustomerLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 
+// Auth
+import { Login } from "./pages/Login";
+
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    Component: Login,
+  },
   {
     path: "/",
     Component: CustomerLayout,
