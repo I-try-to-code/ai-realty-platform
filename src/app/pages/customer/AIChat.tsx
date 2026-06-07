@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, Sparkles, Home, MapPin, Bed, Bath, Maximize } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
@@ -41,6 +41,22 @@ export function AIChat() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [extractedPreferences, setExtractedPreferences] = useState<string[]>([]);
+  const [dbProperties, setDbProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadProperties() {
+      try {
+        const res = await fetch("/api/properties?status=ACTIVE");
+        if (res.ok) {
+          const data = await res.json();
+          setDbProperties(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    loadProperties();
+  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -51,38 +67,29 @@ export function AIChat() {
     setIsTyping(true);
 
     setTimeout(() => {
+      // Map active database properties dynamically
+      const recs = dbProperties.slice(0, 2).map((p: any) => ({
+        id: p.id,
+        image: p.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
+        price: p.price ? `$${p.price.toLocaleString()}` : "Contact Agent",
+        title: p.title,
+        location: p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality"),
+        beds: p.beds || 0,
+        baths: p.baths || 0,
+        sqft: p.sqft || 0,
+        matchScore: 95,
+      }));
+
       const assistantMessage: Message = {
         role: "assistant",
-        content:
-          "Based on your requirements, I've found some excellent properties that match your criteria. Here are my top recommendations:",
-        properties: [
-          {
-            id: "1",
-            image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-            price: "$850,000",
-            title: "Modern Family Home",
-            location: "San Francisco, CA",
-            beds: 4,
-            baths: 3,
-            sqft: 2500,
-            matchScore: 95,
-          },
-          {
-            id: "2",
-            image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
-            price: "$1,200,000",
-            title: "Luxury Penthouse",
-            location: "Los Angeles, CA",
-            beds: 3,
-            baths: 2,
-            sqft: 1800,
-            matchScore: 88,
-          },
-        ],
+        content: recs.length > 0
+          ? "Based on your requirements, I've scanned our active listings and found some excellent matches. Here are my top recommendations:"
+          : "I searched our listings catalog, but we don't have active properties matching those criteria right now. Let me know if you want to broaden your search!",
+        properties: recs,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      setExtractedPreferences(["Modern Architecture", "3-4 Bedrooms", "Good Schools", "Under $900K"]);
+      setExtractedPreferences(["Modern Architecture", "3-4 Bedrooms", "Good Schools", "San Francisco"]);
       setIsTyping(false);
     }, 1500);
   };
@@ -137,7 +144,7 @@ export function AIChat() {
                 </div>
 
                 {/* Property Cards in Chat */}
-                {message.properties && (
+                {message.properties && message.properties.length > 0 && (
                   <div className="grid md:grid-cols-2 gap-4 mt-4">
                     {message.properties.map((property) => (
                       <Link key={property.id} to={`/property/${property.id}`}>

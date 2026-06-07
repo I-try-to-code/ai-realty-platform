@@ -211,4 +211,36 @@ router.put("/:id/status", authenticateToken, authorizeRoles("ADMIN"), async (req
   }
 });
 
+/**
+ * GET /api/properties/localities/all
+ * Fetch all available localities
+ */
+router.get("/localities/all", async (req, res) => {
+  try {
+    const localities = await prisma.locality.findMany({
+      orderBy: { name: "asc" }
+    });
+    return res.json(localities);
+  } catch (error) {
+    console.error("[localities get error]", error);
+    return res.status(500).json({ error: "Failed to retrieve localities." });
+  }
+});
+
+/**
+ * GET /api/properties/amenities/all
+ * Fetch all available amenities
+ */
+router.get("/amenities/all", async (req, res) => {
+  try {
+    const amenities = await prisma.amenity.findMany({
+      orderBy: { name: "asc" }
+    });
+    return res.json(amenities);
+  } catch (error) {
+    console.error("[amenities get error]", error);
+    return res.status(500).json({ error: "Failed to retrieve amenities." });
+  }
+});
+
 export default router;

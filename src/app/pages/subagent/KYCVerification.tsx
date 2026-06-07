@@ -1,23 +1,118 @@
-import { useState } from "react";
-import { Upload, FileText, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
+import { Upload, FileText, CheckCircle2, Clock, AlertCircle, X, ExternalLink } from "lucide-react";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 
 export function KYCVerification() {
-  const [verificationStatus, setVerificationStatus] = useState<"pending" | "verified" | "rejected">("pending");
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<"unsubmitted" | "pending" | "approved" | "rejected">("unsubmitted");
+  const [feedback, setFeedback] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
   const [documents, setDocuments] = useState({
-    idProof: null as string | null,
-    license: null as string | null,
-    addressProof: null as string | null,
+    panCard: null as { name: string; url: string } | null,
+    aadhaarCard: null as { name: string; url: string } | null,
   });
 
-  const handleUpload = (type: keyof typeof documents) => {
-    setDocuments({
-      ...documents,
-      [type]: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400",
-    });
+  const panInputRef = useRef<HTMLInputElement>(null);
+  const aadhaarInputRef = useRef<HTMLInputElement>(null);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    async function loadKYCDetails() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/kyc", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.status) {
+            const dbStatus = data.status.toLowerCase();
+            setVerificationStatus(dbStatus as any);
+            setFeedback(data.adminFeedback || "");
+            if (data.documents) {
+              setDocuments({
+                panCard: data.documents.panCard || null,
+                aadhaarCard: data.documents.aadhaarCard || null,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error loading KYC:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadKYCDetails();
+  }, [token, navigate]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "panCard" | "aadhaarCard") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== "application/pdf") {
+        alert("Please upload a PDF document only.");
+        return;
+      }
+      setDocuments((prev) => ({
+        ...prev,
+        [type]: {
+          name: file.name,
+          url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Mock uploaded document URL for sandbox
+        },
+      }));
+    }
   };
+
+  const handleSubmit = async () => {
+    if (!documents.panCard || !documents.aadhaarCard) {
+      alert("Please upload both PAN Card and Aadhaar Card PDF documents.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/kyc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ documents })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setVerificationStatus("pending");
+        alert(data.message || "KYC documents submitted successfully!");
+      } else {
+        alert(data.error || "Failed to submit KYC.");
+      }
+    } catch (err) {
+      console.error("Error submitting KYC:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -25,40 +120,45 @@ export function KYCVerification() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">KYC Verification</h1>
-          <p className="text-gray-600 mt-1">Complete your verification to start listing properties</p>
+          <p className="text-gray-600 mt-1">Verify your identity by submitting tax and identification cards (PDF format only)</p>
         </div>
 
         {/* Status Card */}
         <Card>
           <div className="flex items-start space-x-4">
             <div className={`size-12 rounded-lg flex items-center justify-center ${
-              verificationStatus === "verified" ? "bg-green-100" :
+              verificationStatus === "approved" ? "bg-green-100" :
               verificationStatus === "rejected" ? "bg-red-100" :
-              "bg-yellow-100"
+              verificationStatus === "pending" ? "bg-yellow-100" :
+              "bg-gray-100"
             }`}>
-              {verificationStatus === "verified" && <CheckCircle2 className="size-7 text-green-600" />}
+              {verificationStatus === "approved" && <CheckCircle2 className="size-7 text-green-600" />}
               {verificationStatus === "rejected" && <AlertCircle className="size-7 text-red-600" />}
               {verificationStatus === "pending" && <Clock className="size-7 text-yellow-600" />}
+              {verificationStatus === "unsubmitted" && <AlertCircle className="size-7 text-gray-600" />}
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-semibold text-gray-900">Verification Status</h2>
                 <Badge
                   variant={
-                    verificationStatus === "verified" ? "success" :
+                    verificationStatus === "approved" ? "success" :
                     verificationStatus === "rejected" ? "danger" :
-                    "warning"
+                    verificationStatus === "pending" ? "warning" :
+                    "default"
                   }
                 >
-                  {verificationStatus === "verified" && "Verified"}
+                  {verificationStatus === "approved" && "Verified"}
                   {verificationStatus === "rejected" && "Rejected"}
                   {verificationStatus === "pending" && "Pending Review"}
+                  {verificationStatus === "unsubmitted" && "Not Submitted"}
                 </Badge>
               </div>
               <p className="text-gray-600">
-                {verificationStatus === "verified" && "Your account has been verified. You can now list properties."}
-                {verificationStatus === "rejected" && "Your verification was rejected. Please upload valid documents."}
+                {verificationStatus === "approved" && "Your account has been verified. You can now list properties."}
+                {verificationStatus === "rejected" && `Your verification was rejected. Feedback: "${feedback || "Please upload valid documents."}"`}
                 {verificationStatus === "pending" && "Your documents are under review. This usually takes 24-48 hours."}
+                {verificationStatus === "unsubmitted" && "Please upload PAN Card and Aadhaar Card PDF files below to complete verification."}
               </p>
             </div>
           </div>
@@ -70,9 +170,9 @@ export function KYCVerification() {
           <div className="space-y-4">
             {[
               { step: "Personal Information", status: "completed" },
-              { step: "Document Upload", status: documents.idProof && documents.license ? "completed" : "current" },
-              { step: "Admin Review", status: verificationStatus === "verified" ? "completed" : "pending" },
-              { step: "Approval", status: verificationStatus === "verified" ? "completed" : "pending" },
+              { step: "Document Upload", status: documents.panCard && documents.aadhaarCard ? "completed" : "current" },
+              { step: "Admin Review", status: verificationStatus === "approved" ? "completed" : verificationStatus === "pending" ? "current" : "pending" },
+              { step: "Approval", status: verificationStatus === "approved" ? "completed" : "pending" },
             ].map((item, index) => (
               <div key={index} className="flex items-center space-x-4">
                 <div className={`size-8 rounded-full flex items-center justify-center font-semibold ${
@@ -107,92 +207,107 @@ export function KYCVerification() {
         <Card>
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Upload Documents</h2>
           <div className="space-y-6">
-            {/* ID Proof */}
+            
+            {/* PAN Card Upload */}
             <div>
-              <label className="block font-medium text-gray-900 mb-3">
-                Government ID Proof
-                <span className="text-red-500 ml-1">*</span>
+              <label className="block font-medium text-gray-900 mb-2">
+                PAN Card (PDF Format) *
               </label>
-              {documents.idProof ? (
-                <div className="relative group">
-                  <img
-                    src={documents.idProof}
-                    alt="ID Proof"
-                    className="w-full h-40 object-cover rounded-lg border-2 border-green-200"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CheckCircle2 className="size-12 text-white" />
+              <input
+                ref={panInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => handleFileChange(e, "panCard")}
+              />
+              {documents.panCard ? (
+                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <FileText className="size-8 text-primary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{documents.panCard.name}</p>
+                      <p className="text-xs text-gray-600">PDF Document</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => window.open(documents.panCard?.url, "_blank")}
+                      className="p-2 text-gray-500 hover:text-primary"
+                      title="View PDF"
+                    >
+                      <ExternalLink className="size-5" />
+                    </button>
+                    <button
+                      onClick={() => setDocuments({ ...documents, panCard: null })}
+                      className="p-2 text-gray-500 hover:text-red-500"
+                      title="Remove PDF"
+                    >
+                      <X className="size-5" />
+                    </button>
                   </div>
                 </div>
               ) : (
                 <button
-                  onClick={() => handleUpload("idProof")}
-                  className="w-full h-40 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
+                  onClick={() => panInputRef.current?.click()}
+                  className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
                 >
                   <Upload className="size-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Upload ID Proof</span>
-                  <span className="text-xs text-gray-500 mt-1">Passport, Driver's License, or National ID</span>
+                  <span className="text-sm text-gray-600 font-medium">Upload PAN Card PDF</span>
+                  <span className="text-xs text-gray-500 mt-1">Accepts only PDF format</span>
                 </button>
               )}
             </div>
 
-            {/* Real Estate License */}
+            {/* Aadhaar Card Upload */}
             <div>
-              <label className="block font-medium text-gray-900 mb-3">
-                Real Estate License
-                <span className="text-red-500 ml-1">*</span>
+              <label className="block font-medium text-gray-900 mb-2">
+                Aadhaar Card (PDF Format) *
               </label>
-              {documents.license ? (
-                <div className="relative group">
-                  <img
-                    src={documents.license}
-                    alt="License"
-                    className="w-full h-40 object-cover rounded-lg border-2 border-green-200"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CheckCircle2 className="size-12 text-white" />
+              <input
+                ref={aadhaarInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(e) => handleFileChange(e, "aadhaarCard")}
+              />
+              {documents.aadhaarCard ? (
+                <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <FileText className="size-8 text-primary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{documents.aadhaarCard.name}</p>
+                      <p className="text-xs text-gray-600">PDF Document</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => window.open(documents.aadhaarCard?.url, "_blank")}
+                      className="p-2 text-gray-500 hover:text-primary"
+                      title="View PDF"
+                    >
+                      <ExternalLink className="size-5" />
+                    </button>
+                    <button
+                      onClick={() => setDocuments({ ...documents, aadhaarCard: null })}
+                      className="p-2 text-gray-500 hover:text-red-500"
+                      title="Remove PDF"
+                    >
+                      <X className="size-5" />
+                    </button>
                   </div>
                 </div>
               ) : (
                 <button
-                  onClick={() => handleUpload("license")}
-                  className="w-full h-40 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
-                >
-                  <FileText className="size-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Upload License</span>
-                  <span className="text-xs text-gray-500 mt-1">Valid real estate agent license</span>
-                </button>
-              )}
-            </div>
-
-            {/* Address Proof */}
-            <div>
-              <label className="block font-medium text-gray-900 mb-3">
-                Address Proof
-                <span className="text-gray-500 ml-1">(Optional)</span>
-              </label>
-              {documents.addressProof ? (
-                <div className="relative group">
-                  <img
-                    src={documents.addressProof}
-                    alt="Address Proof"
-                    className="w-full h-40 object-cover rounded-lg border-2 border-green-200"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CheckCircle2 className="size-12 text-white" />
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => handleUpload("addressProof")}
-                  className="w-full h-40 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
+                  onClick={() => aadhaarInputRef.current?.click()}
+                  className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-blue-50 transition-colors flex flex-col items-center justify-center"
                 >
                   <Upload className="size-8 text-gray-400 mb-2" />
-                  <span className="text-sm text-gray-600">Upload Address Proof</span>
-                  <span className="text-xs text-gray-500 mt-1">Utility bill or bank statement</span>
+                  <span className="text-sm text-gray-600 font-medium">Upload Aadhaar Card PDF</span>
+                  <span className="text-xs text-gray-500 mt-1">Accepts only PDF format</span>
                 </button>
               )}
             </div>
+            
           </div>
         </Card>
 
@@ -205,9 +320,10 @@ export function KYCVerification() {
             size="lg"
             variant="success"
             className="w-full sm:w-auto"
-            disabled={!documents.idProof || !documents.license}
+            onClick={handleSubmit}
+            disabled={!documents.panCard || !documents.aadhaarCard || submitting}
           >
-            Submit for Review
+            {submitting ? "Submitting..." : "Submit for Review"}
           </Button>
         </div>
       </div>

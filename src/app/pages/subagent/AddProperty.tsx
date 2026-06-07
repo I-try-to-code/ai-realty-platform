@@ -1,27 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Upload, MapPin, DollarSign, Home, CheckCircle2, X } from "lucide-react";
+import { Upload, MapPin, DollarSign, CheckCircle2, X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 
 const steps = ["Basic Info", "Details", "Amenities", "Images", "Review"];
-
-const amenitiesList = [
-  "Central Air Conditioning",
-  "Hardwood Floors",
-  "Granite Countertops",
-  "Stainless Steel Appliances",
-  "Walk-in Closets",
-  "Smart Home System",
-  "Energy Efficient",
-  "Private Backyard",
-  "Pool",
-  "Garage",
-  "Garden",
-  "Gym",
-  "Security System",
-];
 
 export function AddProperty() {
   const { id } = useParams();
@@ -29,42 +13,137 @@ export function AddProperty() {
   const isEdit = !!id;
   const [currentStep, setCurrentStep] = useState(0);
   const [images, setImages] = useState<string[]>([]);
+  const [localities, setLocalities] = useState<any[]>([]);
+  const [amenitiesList, setAmenitiesList] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
-    propertyType: "house",
+    propertyType: "VILLA",
+    listingType: "SALE",
     price: "",
-    location: "",
+    localityId: "",
+    address: "",
     beds: "",
     baths: "",
     sqft: "",
-    garage: "",
-    yearBuilt: "",
     description: "",
-    amenities: [] as string[],
-    furnishing: "unfurnished",
+    amenityIds: [] as string[],
   });
+
+  useEffect(() => {
+    async function loadConfigData() {
+      try {
+        const locRes = await fetch("/api/properties/localities/all");
+        if (locRes.ok) {
+          const locData = await locRes.json();
+          setLocalities(locData);
+        }
+
+        const amRes = await fetch("/api/properties/amenities/all");
+        if (amRes.ok) {
+          const amData = await amRes.json();
+          setAmenitiesList(amData);
+        }
+      } catch (err) {
+        console.error("Error loading localities/amenities:", err);
+      }
+    }
+    loadConfigData();
+  }, []);
+
+  useEffect(() => {
+    if (isEdit && id) {
+      async function loadPropertyToEdit() {
+        try {
+          const res = await fetch(`/api/properties/${id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setFormData({
+              title: data.title || "",
+              propertyType: data.propertyType || "VILLA",
+              listingType: data.listingType || "SALE",
+              price: data.price ? data.price.toString() : "",
+              localityId: data.localityId || "",
+              address: data.address || "",
+              beds: data.beds ? data.beds.toString() : "",
+              baths: data.baths ? data.baths.toString() : "",
+              sqft: data.sqft ? data.sqft.toString() : "",
+              description: data.description || "",
+              amenityIds: data.amenities?.map((a: any) => a.amenityId) || []
+            });
+            setImages(data.media?.map((m: any) => m.url) || []);
+          }
+        } catch (err) {
+          console.error("Error loading property for edit:", err);
+        }
+      }
+      loadPropertyToEdit();
+    }
+  }, [isEdit, id]);
 
   const handleImageUpload = () => {
     const mockImages = [
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
     ];
     setImages([...images, ...mockImages]);
   };
 
-  const handleSubmit = () => {
-    navigate("/subagent/dashboard");
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.price || !formData.localityId || !formData.propertyType || !formData.listingType) {
+      alert("Please fill in all required basic fields.");
+      return;
+    }
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      price: parseFloat(formData.price.replace(/,/g, "")),
+      address: formData.address,
+      localityId: formData.localityId,
+      propertyType: formData.propertyType,
+      listingType: formData.listingType,
+      mediaUrls: images.length > 0 ? images : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"],
+      amenityIds: formData.amenityIds
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+      const url = isEdit ? `/api/properties/${id}` : "/api/properties";
+      const method = isEdit ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(isEdit ? "Property updated successfully!" : "Property listing created successfully and sent for approval!");
+        navigate("/subagent/dashboard");
+      } else {
+        alert(data.error || "Failed to submit property.");
+      }
+    } catch (err) {
+      console.error("Error submitting property:", err);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
-  const toggleAmenity = (amenity: string) => {
+  const toggleAmenity = (amenityId: string) => {
     setFormData({
       ...formData,
-      amenities: formData.amenities.includes(amenity)
-        ? formData.amenities.filter((a) => a !== amenity)
-        : [...formData.amenities, amenity],
+      amenityIds: formData.amenityIds.includes(amenityId)
+        ? formData.amenityIds.filter((a) => a !== amenityId)
+        : [...formData.amenityIds, amenityId],
     });
   };
+
+  const selectedLocality = localities.find(l => l.id === formData.localityId);
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -137,7 +216,7 @@ export function AddProperty() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Property Title
+                    Property Title *
                   </label>
                   <input
                     type="text"
@@ -149,44 +228,75 @@ export function AddProperty() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Property Type
+                    Property Type *
                   </label>
                   <select
                     value={formData.propertyType}
                     onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
                   >
-                    <option value="house">House</option>
-                    <option value="apartment">Apartment</option>
-                    <option value="condo">Condo</option>
-                    <option value="townhouse">Townhouse</option>
-                    <option value="villa">Villa</option>
+                    <option value="VILLA">Villa / House</option>
+                    <option value="APARTMENT">Apartment / Condo</option>
+                    <option value="PLOT">Plot</option>
+                    <option value="OFFICE">Office</option>
+                    <option value="SHOP">Shop</option>
+                    <option value="COMMERCIAL">Commercial Building</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Listing Type *
+                  </label>
+                  <select
+                    value={formData.listingType}
+                    onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="SALE">For Sale</option>
+                    <option value="RENT">For Rent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price *</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-gray-400" />
                     <input
                       type="text"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="850,000"
+                      placeholder="850000"
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white"
                     />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location
+                    Locality *
+                  </label>
+                  <select
+                    value={formData.localityId}
+                    onChange={(e) => setFormData({ ...formData, localityId: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  >
+                    <option value="">Select Locality</option>
+                    {localities.map((loc: any) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name} ({loc.city}, {loc.state})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Street Address
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-gray-400" />
                     <input
                       type="text"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="San Francisco, CA"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="e.g. 123 Dolores St"
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white"
                     />
                   </div>
@@ -236,42 +346,6 @@ export function AddProperty() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Garage</label>
-                  <input
-                    type="number"
-                    value={formData.garage}
-                    onChange={(e) => setFormData({ ...formData, garage: e.target.value })}
-                    placeholder="2"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Year Built
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.yearBuilt}
-                    onChange={(e) => setFormData({ ...formData, yearBuilt: e.target.value })}
-                    placeholder="2019"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Furnishing
-                  </label>
-                  <select
-                    value={formData.furnishing}
-                    onChange={(e) => setFormData({ ...formData, furnishing: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
-                  >
-                    <option value="unfurnished">Unfurnished</option>
-                    <option value="semi-furnished">Semi-Furnished</option>
-                    <option value="fully-furnished">Fully Furnished</option>
-                  </select>
-                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -292,26 +366,30 @@ export function AddProperty() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">Amenities</h2>
-              <div className="grid md:grid-cols-3 gap-3">
-                {amenitiesList.map((amenity) => (
-                  <button
-                    key={amenity}
-                    onClick={() => toggleAmenity(amenity)}
-                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all text-left ${
-                      formData.amenities.includes(amenity)
-                        ? "border-primary bg-blue-50 text-primary"
-                        : "border-gray-200 text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      {amenity}
-                      {formData.amenities.includes(amenity) && (
-                        <CheckCircle2 className="size-5 text-primary" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {amenitiesList.length === 0 ? (
+                <p className="text-gray-500">No amenities config available in database.</p>
+              ) : (
+                <div className="grid md:grid-cols-3 gap-3">
+                  {amenitiesList.map((amenity) => (
+                    <button
+                      key={amenity.id}
+                      onClick={() => toggleAmenity(amenity.id)}
+                      className={`p-3 rounded-lg border-2 text-sm font-medium transition-all text-left ${
+                        formData.amenityIds.includes(amenity.id)
+                          ? "border-primary bg-blue-50 text-primary"
+                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        {amenity.name}
+                        {formData.amenityIds.includes(amenity.id) && (
+                          <CheckCircle2 className="size-5 text-primary" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -364,20 +442,23 @@ export function AddProperty() {
                     <p className="font-medium text-gray-900">${formData.price || "Not set"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-medium text-gray-900">{formData.location || "Not set"}</p>
+                    <p className="text-sm text-gray-600">Locality</p>
+                    <p className="font-medium text-gray-900">{selectedLocality ? `${selectedLocality.name} (${selectedLocality.city})` : "Not set"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Type</p>
-                    <p className="font-medium text-gray-900 capitalize">{formData.propertyType}</p>
+                    <p className="font-medium text-gray-900 capitalize">{formData.propertyType.toLowerCase()}</p>
                   </div>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600 mb-2">Selected Amenities</p>
                   <div className="flex flex-wrap gap-2">
-                    {formData.amenities.map((amenity) => (
-                      <Badge key={amenity} variant="info" size="sm">{amenity}</Badge>
-                    ))}
+                    {formData.amenityIds.map((id) => {
+                      const amenity = amenitiesList.find(a => a.id === id);
+                      return amenity ? (
+                        <Badge key={id} variant="info" size="sm">{amenity.name}</Badge>
+                      ) : null;
+                    })}
                   </div>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
