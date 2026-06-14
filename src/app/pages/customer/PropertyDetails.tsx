@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   Coffee,
   Train,
-  LogOut
+  LogOut,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
@@ -124,10 +125,9 @@ export function PropertyDetails() {
 
       const data = await res.json();
       if (res.ok) {
-        alert("Interest submitted! An inquiry conversation has been successfully started.");
-        navigate("/customer/dashboard");
+        navigate(`/customer/chat/${data.lead.id}`);
       } else {
-        alert(data.error || "Failed to submit interest.");
+        alert(data.error || "Failed to start chat with agent.");
       }
     } catch (err) {
       console.error("Error submitting interest:", err);
@@ -420,16 +420,16 @@ export function PropertyDetails() {
                   onClick={handleExpressInterest}
                   disabled={interestSubmitting}
                 >
-                  <Sparkles className="size-4 mr-2" />
-                  {interestSubmitting ? "Submitting..." : "I'm Interested"}
+                  <MessageSquare className="size-4 mr-2" />
+                  {interestSubmitting ? "Opening Chat..." : "Chat with Agent"}
                 </Button>
                 <Button variant="outline" className="w-full">
                   <Calendar className="size-4 mr-2" />
                   Schedule Visit
                 </Button>
-                <Button variant="ghost" className="w-full">
-                  <Heart className="size-4 mr-2" />
-                  Save Property
+                <Button variant="ghost" className="w-full" onClick={handleToggleSave}>
+                  <Heart className={`size-4 mr-2 ${saved ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+                  {saved ? "Saved" : "Save Property"}
                 </Button>
               </div>
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">

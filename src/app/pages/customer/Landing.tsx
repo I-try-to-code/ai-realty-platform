@@ -58,6 +58,10 @@ const testimonials = [
 ];
 
 export function CustomerLanding() {
+  const token = localStorage.getItem("token");
+  const searchPath = token ? "/customer/search" : "/search";
+  const aiChatPath = token ? "/customer/ai-chat" : "/ai-chat";
+
   return (
     <div>
       {/* Hero Section */}
@@ -79,13 +83,13 @@ export function CustomerLanding() {
               Trusted, transparent, and intelligent real estate brokerage.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/ai-chat">
+              <Link to={aiChatPath}>
                 <Button size="lg" className="w-full sm:w-auto">
                   <Sparkles className="size-5 mr-2" />
                   Start AI Search
                 </Button>
               </Link>
-              <Link to="/search">
+              <Link to={searchPath}>
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   <Search className="size-5 mr-2" />
                   Browse Properties
@@ -156,7 +160,7 @@ export function CustomerLanding() {
               <h2 className="text-3xl font-bold text-gray-900">Featured Properties</h2>
               <p className="text-gray-600 mt-2">Handpicked homes selected by our AI</p>
             </div>
-            <Link to="/search">
+            <Link to={searchPath}>
               <Button variant="outline">View All</Button>
             </Link>
           </div>
@@ -178,7 +182,7 @@ export function CustomerLanding() {
           <p className="text-xl text-blue-100 mb-8">
             Get personalized recommendations, ask questions, and discover properties that match your exact needs
           </p>
-          <Link to="/ai-chat">
+          <Link to={aiChatPath}>
             <Button size="lg" variant="secondary">
               <Sparkles className="size-5 mr-2" />
               Start Conversation

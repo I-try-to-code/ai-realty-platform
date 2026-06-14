@@ -117,7 +117,7 @@ export function CustomerDashboard() {
               <Sparkles className="size-6 text-primary" />
               <h2 className="text-xl font-semibold text-gray-900">AI Recommendations For You</h2>
             </div>
-            <Link to="/search">
+            <Link to="/customer/search">
               <Button variant="outline" size="sm">View All</Button>
             </Link>
           </div>
@@ -157,7 +157,7 @@ export function CustomerDashboard() {
               {leads.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No active conversations.</p>
-                  <Link to="/search" className="mt-2 inline-block">
+                  <Link to="/customer/search" className="mt-2 inline-block">
                     <Button variant="outline" size="sm">Search Properties</Button>
                   </Link>
                 </div>
@@ -230,7 +230,7 @@ export function CustomerDashboard() {
                 <Badge variant="ai" size="sm">Good Schools</Badge>
                 <Badge variant="ai" size="sm">$800K - $900K</Badge>
               </div>
-              <Link to="/ai-chat">
+              <Link to="/customer/ai-chat">
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   <Sparkles className="size-4 mr-2" />
                   Update Preferences

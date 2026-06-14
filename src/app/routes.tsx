@@ -7,6 +7,7 @@ import { PropertyDetails } from "./pages/customer/PropertyDetails";
 import { AIChat } from "./pages/customer/AIChat";
 import { CustomerDashboard } from "./pages/customer/Dashboard";
 import { CustomerChat } from "./pages/customer/CustomerChat";
+import { SavedProperties } from "./pages/customer/SavedProperties";
 
 // Subagent Pages
 import { SubagentDashboard } from "./pages/subagent/Dashboard";
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
     children: [
       { path: "dashboard", Component: CustomerDashboard },
       { path: "chat/:leadId", Component: CustomerChat },
+      { path: "search", Component: PropertySearch },
+      { path: "property/:id", Component: PropertyDetails },
+      { path: "ai-chat", Component: AIChat },
+      { path: "saved", Component: SavedProperties },
     ],
   },
   {
@@ -60,6 +65,7 @@ export const router = createBrowserRouter([
       { path: "properties/edit/:id", Component: AddProperty },
       { path: "leads", Component: LeadManagement },
       { path: "kyc", Component: KYCVerification },
+      { path: "chat/:leadId", Component: CustomerChat },
     ],
   },
   {

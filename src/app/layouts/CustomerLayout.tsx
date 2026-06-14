@@ -30,8 +30,8 @@ export function CustomerLayout() {
   }, []);
 
   const navLinks = [
-    { to: "/search", label: "Search", icon: Search },
-    { to: "/ai-chat", label: "AI Assistant", icon: Sparkles },
+    { to: currentUser ? "/customer/search" : "/search", label: "Search", icon: Search },
+    { to: currentUser ? "/customer/ai-chat" : "/ai-chat", label: "AI Assistant", icon: Sparkles },
   ];
 
   return (
@@ -227,9 +227,9 @@ export function CustomerLayout() {
       </main>
 
       {/* Floating AI Chat Button */}
-      {location.pathname !== '/ai-chat' && (
+      {location.pathname !== '/ai-chat' && location.pathname !== '/customer/ai-chat' && (
         <Link
-          to="/ai-chat"
+          to={currentUser ? "/customer/ai-chat" : "/ai-chat"}
           className="fixed bottom-6 right-6 size-14 bg-gradient-to-br from-primary to-accent rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow z-40"
         >
           <MessageSquare className="size-6 text-white" />

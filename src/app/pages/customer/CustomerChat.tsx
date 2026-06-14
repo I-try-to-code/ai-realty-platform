@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, Link, useNavigate, useLocation } from "react-router";
 import { Send, Shield, MapPin, Bed, Bath, Maximize, Info, X } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
@@ -8,12 +8,15 @@ import { Card } from "../../components/Card";
 export function CustomerChat() {
   const { leadId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isCustomerPortal = location.pathname.startsWith('/customer');
   const [session, setSession] = useState<any>(null);
   const [lead, setLead] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [input, setInput] = useState("");
   const [showSidebar, setShowSidebar] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const token = localStorage.getItem("token");
@@ -45,6 +48,17 @@ export function CustomerChat() {
     async function loadChatDetails() {
       setLoading(true);
       try {
+        // Fetch all leads
+        const leadsRes = await fetch("/api/leads", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (leadsRes.ok) {
+          const leadsData = await leadsRes.json();
+          setLeads(leadsData);
+        }
+
         const sessionRes = await fetch(`/api/messages/lead/${leadId}`, {
           headers: {
             "Authorization": `Bearer ${token}`
@@ -175,6 +189,58 @@ export function CustomerChat() {
         />
       )}
 
+      {/* Chat List Sidebar (Left pane) */}
+      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen hidden md:flex">
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900 text-lg">Active Chats</h3>
+          <p className="text-xs text-gray-500 mt-1">Talk with agents/clients about active properties</p>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {leads.map((l) => {
+            const prop = l.property;
+            const subagentName = l.subagent?.name || "Verified Agent";
+            const customerName = l.customer?.name || "Customer";
+            const partnerName = isCustomerPortal ? subagentName : customerName;
+            
+            const propImg = prop?.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200";
+            const isActive = l.id === leadId;
+            const chatLink = isCustomerPortal ? `/customer/chat/${l.id}` : `/subagent/chat/${l.id}`;
+
+            return (
+              <Link key={l.id} to={chatLink}>
+                <div
+                  className={`flex items-center space-x-3 p-3 rounded-xl transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-blue-50 border-l-4 border-primary"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <img
+                    src={propImg}
+                    alt={prop?.title}
+                    className="size-10 rounded-lg object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {prop?.title || "Property"}
+                    </p>
+                    <p className="text-xs text-gray-600 truncate">{partnerName}</p>
+                  </div>
+                  <Badge variant={l.status === "NEW" ? "info" : "default"} size="sm">
+                    {l.status}
+                  </Badge>
+                </div>
+              </Link>
+            );
+          })}
+          {leads.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500">No active chats.</p>
+            </div>
+          )}
+        </div>
+      </aside>
+
       {/* Chat Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
@@ -296,7 +362,7 @@ export function CustomerChat() {
           </button>
         </div>
 
-        <Link to={`/property/${property.id}`}>
+        <Link to={isCustomerPortal ? `/customer/property/${property.id}` : `/property/${property.id}`}>
           <Card padding={false} hover>
             <img
               src={propertyImage}

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { MapPin, Bed, Bath, Maximize, Sparkles } from "lucide-react";
 import { Badge } from "./Badge";
 
@@ -27,8 +27,12 @@ export function PropertyCard({
   aiScore,
   aiReason,
 }: PropertyCardProps) {
+  const loc = useLocation();
+  const isCustomer = loc.pathname.startsWith('/customer');
+  const detailsPath = isCustomer ? `/customer/property/${id}` : `/property/${id}`;
+
   return (
-    <Link to={`/property/${id}`}>
+    <Link to={detailsPath}>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative h-48">
           <img src={image} alt={title} className="size-full object-cover" />

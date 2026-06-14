@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Search, Filter, MessageSquare, Phone, Mail, Clock, KeyRound } from "lucide-react";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 
 export function LeadManagement() {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filter, setFilter] = useState("all");
@@ -347,7 +349,11 @@ export function LeadManagement() {
                       </select>
                     </div>
 
-                    <Button className="w-full" size="sm">
+                    <Button 
+                      className="w-full" 
+                      size="sm"
+                      onClick={() => navigate(`/subagent/chat/${selectedLead.id}`)}
+                    >
                       <MessageSquare className="size-4 mr-2" />
                       Open Chat
                     </Button>

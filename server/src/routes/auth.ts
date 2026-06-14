@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db";
 import { Role } from "@prisma/client";
+import { authenticateToken, AuthRequest } from "../middlewares/auth";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "ai_realty_secret_session_token_key_12345";
@@ -122,6 +123,65 @@ router.post("/login", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("[login error]", error);
     return res.status(500).json({ error: "Internal server error during login." });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Update profile details of the current logged-in user
+ */
+router.put("/profile", authenticateToken, async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { name, email, phone, password } = req.body;
+
+  try {
+    // 1. If email is being updated, check if it already exists for another user
+    if (email) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email }
+      });
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ error: "Email is already in use by another account." });
+      }
+    }
+
+    // 2. Prepare data object for update
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (password) {
+      updateData.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    // 3. Update the user in db
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    });
+
+    // 4. Sign refreshed token
+    const token = jwt.sign(
+      { id: updatedUser.id, email: updatedUser.email, role: updatedUser.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 5. Return the updated user details (excluding password hash)
+    return res.json({
+      message: "Profile updated successfully!",
+      token,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        phone: updatedUser.phone
+      }
+    });
+  } catch (error) {
+    console.error("[update profile error]", error);
+    return res.status(500).json({ error: "Failed to update profile details." });
   }
 });
 

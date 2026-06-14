@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Send, Sparkles, Home, MapPin, Bed, Bath, Maximize } from "lucide-react";
 import { Button } from "../../components/Button";
 import { Badge } from "../../components/Badge";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +37,8 @@ const suggestedQuestions = [
 ];
 
 export function AIChat() {
+  const location = useLocation();
+  const isCustomer = location.pathname.startsWith('/customer');
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -147,7 +149,7 @@ export function AIChat() {
                 {message.properties && message.properties.length > 0 && (
                   <div className="grid md:grid-cols-2 gap-4 mt-4">
                     {message.properties.map((property) => (
-                      <Link key={property.id} to={`/property/${property.id}`}>
+                      <Link key={property.id} to={isCustomer ? `/customer/property/${property.id}` : `/property/${property.id}`}>
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
                           <div className="relative h-32">
                             <img src={property.image} alt={property.title} className="size-full object-cover" />
@@ -272,13 +274,13 @@ export function AIChat() {
         <div className="mt-8">
           <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-2">
-            <Link to="/search">
+            <Link to={isCustomer ? "/customer/search" : "/search"}>
               <Button variant="outline" className="w-full justify-start">
                 <Home className="size-4 mr-2" />
                 Browse All Properties
               </Button>
             </Link>
-            <Link to="/customer/dashboard">
+            <Link to={isCustomer ? "/customer/saved" : "/login"}>
               <Button variant="outline" className="w-full justify-start">
                 <Sparkles className="size-4 mr-2" />
                 View Saved Properties

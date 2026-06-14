@@ -13,7 +13,9 @@ import {
   CheckCircle,
   LogOut,
   Menu,
-  X
+  X,
+  Heart,
+  Sparkles
 } from "lucide-react";
 import { Badge } from "../components/Badge";
 
@@ -33,9 +35,10 @@ export function DashboardLayout() {
   const isAdmin = location.pathname.startsWith('/admin');
 
   const customerLinks = [
-    { path: '/customer/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/search', label: 'Search Properties', icon: Home },
-    { path: '/ai-chat', label: 'AI Assistant', icon: MessageSquare },
+    { path: '/customer/dashboard', label: 'Active Leads', icon: MessageSquare },
+    { path: '/customer/saved', label: 'Saved Properties', icon: Heart },
+    { path: '/customer/search', label: 'Search Properties', icon: Home },
+    { path: '/customer/ai-chat', label: 'AI Assistant', icon: Sparkles },
   ];
 
   const subagentLinks = [
