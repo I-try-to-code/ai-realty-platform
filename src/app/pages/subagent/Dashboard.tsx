@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { Building2, Users, MessageSquare, Eye, CheckCircle, Clock } from "lucide-react";
+import { Building2, Users, MessageSquare, Eye, CheckCircle, Clock, Edit2, Trash2 } from "lucide-react";
 import { StatCard } from "../../components/StatCard";
 import { Card } from "../../components/Card";
 import { Badge } from "../../components/Badge";
@@ -12,6 +12,32 @@ export function SubagentDashboard() {
   const [leads, setLeads] = useState<any[]>([]);
   const [myProperties, setMyProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    if (!window.confirm("Are you sure you want to delete this property listing?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/properties/${propertyId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        setMyProperties(prev => prev.filter(p => p.id !== propertyId));
+        alert("Property deleted successfully!");
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete property.");
+      }
+    } catch (err) {
+      console.error("Error deleting property:", err);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   const token = localStorage.getItem("token");
   let subagentName = "John Doe";
@@ -238,14 +264,30 @@ export function SubagentDashboard() {
                           {property.status}
                         </Badge>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Eye className="size-4 mr-1" />
-                          115
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <Eye className="size-4 mr-1" />
+                            115
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="size-4 mr-1" />
+                            Active
+                          </div>
                         </div>
-                        <div className="flex items-center">
-                          <Users className="size-4 mr-1" />
-                          Active
+                        <div className="flex space-x-2">
+                          <Link to={`/subagent/properties/edit/${property.id}`}>
+                            <button className="p-1 text-gray-500 hover:text-primary transition-colors cursor-pointer" title="Edit Property">
+                              <Edit2 className="size-4" />
+                            </button>
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteProperty(property.id)}
+                            className="p-1 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                            title="Delete Property"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
                         </div>
                       </div>
                     </div>

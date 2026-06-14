@@ -13,7 +13,9 @@ router.get("/", async (req, res) => {
   const { status, type, city } = req.query;
 
   try {
-    const filter: any = {};
+    const filter: any = {
+      deletedAt: null
+    };
 
     // Filter by listing status
     if (status) {
@@ -208,6 +210,139 @@ router.put("/:id/status", authenticateToken, authorizeRoles("ADMIN"), async (req
   } catch (error) {
     console.error("[property moderate error]", error);
     return res.status(500).json({ error: "Failed to moderate property." });
+  }
+});
+
+/**
+ * PUT /api/properties/:id
+ * Update an existing property listing (Restricted to owner SUBAGENT or ADMIN)
+ */
+router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const {
+    title,
+    description,
+    price,
+    address,
+    localityId,
+    propertyType,
+    listingType,
+    mediaUrls,
+    amenityIds
+  } = req.body;
+
+  const userId = req.user!.id;
+  const role = req.user!.role;
+
+  try {
+    // 1. Fetch property and its agents to check ownership
+    const property = await prisma.property.findUnique({
+      where: { id },
+      include: { agents: true }
+    });
+
+    if (!property || property.deletedAt) {
+      return res.status(404).json({ error: "Property not found." });
+    }
+
+    // Check ownership
+    const isOwner = property.agents.some(a => a.subagentId === userId);
+    if (!isOwner && role !== "ADMIN") {
+      return res.status(403).json({ error: "Unauthorized. You are not assigned as an agent for this property." });
+    }
+
+    // 2. Update basic fields
+    const updatedProperty = await prisma.property.update({
+      where: { id },
+      data: {
+        title: title !== undefined ? title : property.title,
+        description: description !== undefined ? description : property.description,
+        price: price !== undefined ? parseFloat(price) : property.price,
+        address: address !== undefined ? address : property.address,
+        localityId: localityId !== undefined ? localityId : property.localityId,
+        propertyType: propertyType !== undefined ? propertyType as PropertyType : property.propertyType,
+        listingType: listingType !== undefined ? listingType as ListingType : property.listingType,
+        status: role === "ADMIN" ? property.status : PropertyStatus.PENDING_APPROVAL // reset for re-approval unless admin
+      }
+    });
+
+    // 3. Update media if provided
+    if (mediaUrls) {
+      // Delete old media
+      await prisma.propertyMedia.deleteMany({ where: { propertyId: id } });
+      // Create new media
+      await prisma.propertyMedia.createMany({
+        data: mediaUrls.map((url: string, index: number) => ({
+          propertyId: id,
+          fileName: `media_${index + 1}.jpg`,
+          fileType: "image/jpeg",
+          url
+        }))
+      });
+    }
+
+    // 4. Update amenities if provided
+    if (amenityIds) {
+      // Delete old relations
+      await prisma.propertyAmenity.deleteMany({ where: { propertyId: id } });
+      // Create new relations
+      await prisma.propertyAmenity.createMany({
+        data: amenityIds.map((amenityId: string) => ({
+          propertyId: id,
+          amenityId
+        }))
+      });
+    }
+
+    return res.json({
+      message: "Property updated successfully! Sent for re-approval.",
+      property: updatedProperty
+    });
+  } catch (error) {
+    console.error("[property update error]", error);
+    return res.status(500).json({ error: "Failed to update property details." });
+  }
+});
+
+/**
+ * DELETE /api/properties/:id
+ * Soft delete an existing property listing (Restricted to owner SUBAGENT or ADMIN)
+ */
+router.delete("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const role = req.user!.role;
+
+  try {
+    // 1. Fetch property and its agents to check ownership
+    const property = await prisma.property.findUnique({
+      where: { id },
+      include: { agents: true }
+    });
+
+    if (!property || property.deletedAt) {
+      return res.status(404).json({ error: "Property not found." });
+    }
+
+    // Check ownership
+    const isOwner = property.agents.some(a => a.subagentId === userId);
+    if (!isOwner && role !== "ADMIN") {
+      return res.status(403).json({ error: "Unauthorized. You are not assigned as an agent for this property." });
+    }
+
+    // 2. Perform soft delete
+    await prisma.property.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        status: PropertyStatus.ARCHIVED
+      }
+    });
+
+    return res.json({ message: "Property listing deleted successfully!" });
+  } catch (error) {
+    console.error("[property delete error]", error);
+    return res.status(500).json({ error: "Failed to delete property listing." });
   }
 });
 

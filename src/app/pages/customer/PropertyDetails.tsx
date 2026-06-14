@@ -38,6 +38,19 @@ export function PropertyDetails() {
         if (res.ok) {
           const data = await res.json();
           setProperty(data);
+
+          // Check if this property is in user's saved list
+          const token = localStorage.getItem("token");
+          if (token) {
+            const savedRes = await fetch("/api/saved-properties", {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (savedRes.ok) {
+              const savedList = await savedRes.json();
+              const isSaved = savedList.some((p: any) => p.id === id);
+              setSaved(isSaved);
+            }
+          }
         } else {
           console.error("Property not found");
         }
@@ -49,6 +62,41 @@ export function PropertyDetails() {
     }
     loadPropertyDetails();
   }, [id]);
+
+  const handleToggleSave = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please sign in to save properties.");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      if (saved) {
+        const res = await fetch(`/api/saved-properties/${id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setSaved(false);
+        }
+      } else {
+        const res = await fetch("/api/saved-properties", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ propertyId: id })
+        });
+        if (res.ok) {
+          setSaved(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to toggle save property status:", err);
+    }
+  };
 
   const handleExpressInterest = async () => {
     const token = localStorage.getItem("token");
@@ -171,7 +219,7 @@ export function PropertyDetails() {
             />
             <div className="absolute top-4 right-4 flex space-x-2">
               <button
-                onClick={() => setSaved(!saved)}
+                onClick={handleToggleSave}
                 className="size-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
               >
                 <Heart className={`size-5 ${saved ? 'fill-red-500 text-red-500' : 'text-gray-700'}`} />
