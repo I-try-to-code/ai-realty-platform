@@ -127,6 +127,30 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/auth/profile
+ * Retrieve profile details of the current logged-in user
+ */
+router.get("/profile", authenticateToken, async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, phone: true, role: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    return res.json(user);
+  } catch (error) {
+    console.error("[get profile error]", error);
+    return res.status(500).json({ error: "Failed to retrieve profile details." });
+  }
+});
+
+/**
  * PUT /api/auth/profile
  * Update profile details of the current logged-in user
  */

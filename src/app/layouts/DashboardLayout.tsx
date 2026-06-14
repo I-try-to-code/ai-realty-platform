@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Building2,
   Users,
+  User,
   MessageSquare,
   Settings,
   FileCheck,
@@ -35,7 +36,8 @@ export function DashboardLayout() {
   const isAdmin = location.pathname.startsWith('/admin');
 
   const customerLinks = [
-    { path: '/customer/dashboard', label: 'Active Leads', icon: MessageSquare },
+    { path: '/customer/dashboard', label: 'Active Leads', icon: LayoutDashboard },
+    { path: '/customer/chat', label: 'Messages', icon: MessageSquare },
     { path: '/customer/saved', label: 'Saved Properties', icon: Heart },
     { path: '/customer/search', label: 'Search Properties', icon: Home },
     { path: '/customer/ai-chat', label: 'AI Assistant', icon: Sparkles },
@@ -43,9 +45,11 @@ export function DashboardLayout() {
 
   const subagentLinks = [
     { path: '/subagent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/subagent/properties/add', label: 'Add Property', icon: Building2 },
-    { path: '/subagent/leads', label: 'Leads', icon: Users },
+    { path: '/subagent/properties', label: 'Property Management', icon: Building2 },
+    { path: '/subagent/leads', label: 'Current Leads', icon: Users },
+    { path: '/subagent/chat', label: 'Messages', icon: MessageSquare },
     { path: '/subagent/kyc', label: 'KYC Verification', icon: FileCheck },
+    { path: '/subagent/profile', label: 'Profile Settings', icon: User },
   ];
 
   const adminLinks = [
@@ -101,7 +105,7 @@ export function DashboardLayout() {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = location.pathname === link.path;
+            const isActive = location.pathname === link.path || location.pathname.startsWith(link.path + '/');
             return (
               <Link
                 key={link.path}

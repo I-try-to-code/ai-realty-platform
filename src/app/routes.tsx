@@ -14,6 +14,8 @@ import { SubagentDashboard } from "./pages/subagent/Dashboard";
 import { AddProperty } from "./pages/subagent/AddProperty";
 import { LeadManagement } from "./pages/subagent/LeadManagement";
 import { KYCVerification } from "./pages/subagent/KYCVerification";
+import { PropertyManagement } from "./pages/subagent/PropertyManagement";
+import { Profile } from "./pages/subagent/Profile";
 
 // Admin Pages
 import { AdminDashboard } from "./pages/admin/Dashboard";
@@ -49,6 +51,7 @@ export const router = createBrowserRouter([
     Component: DashboardLayout,
     children: [
       { path: "dashboard", Component: CustomerDashboard },
+      { path: "chat", Component: CustomerChat },
       { path: "chat/:leadId", Component: CustomerChat },
       { path: "search", Component: PropertySearch },
       { path: "property/:id", Component: PropertyDetails },
@@ -61,11 +64,14 @@ export const router = createBrowserRouter([
     Component: DashboardLayout,
     children: [
       { path: "dashboard", Component: SubagentDashboard },
+      { path: "properties", Component: PropertyManagement },
       { path: "properties/add", Component: AddProperty },
       { path: "properties/edit/:id", Component: AddProperty },
       { path: "leads", Component: LeadManagement },
       { path: "kyc", Component: KYCVerification },
+      { path: "chat", Component: CustomerChat },
       { path: "chat/:leadId", Component: CustomerChat },
+      { path: "profile", Component: Profile },
     ],
   },
   {
