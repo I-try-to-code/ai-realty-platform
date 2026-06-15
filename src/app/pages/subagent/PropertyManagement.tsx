@@ -30,18 +30,14 @@ export function PropertyManagement() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/properties?status=all", {
+      const res = await fetch("/api/properties?myListings=true&status=all", {
         headers: {
           "Authorization": `Bearer ${token}`
         }
       });
       if (res.ok) {
         const data = await res.json();
-        // Filter properties belonging to this subagent
-        const filtered = data.filter((p: any) =>
-          p.agents?.some((a: any) => a.subagentId === currentUserId)
-        );
-        setProperties(filtered);
+        setProperties(data);
       }
     } catch (err) {
       console.error("Failed to load properties:", err);
@@ -81,7 +77,7 @@ export function PropertyManagement() {
   };
 
   const filteredProperties = properties.filter((p) => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = (p.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.address && p.address.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === "all" || p.status === statusFilter;
     return matchesSearch && matchesStatus;

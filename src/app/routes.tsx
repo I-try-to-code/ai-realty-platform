@@ -30,11 +30,16 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 
 // Auth
 import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
 
 export const router = createBrowserRouter([
   {
     path: "/login",
     Component: Login,
+  },
+  {
+    path: "/register",
+    Component: Register,
   },
   {
     path: "/",

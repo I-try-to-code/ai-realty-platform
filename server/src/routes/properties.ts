@@ -35,7 +35,16 @@ router.get("/", async (req, res) => {
     };
 
     // Filter by listing status based on role permissions
-    if (userRole === "ADMIN") {
+    if (userRole === "SUBAGENT" && req.query.myListings === "true" && userId) {
+      filter.agents = {
+        some: {
+          subagentId: userId
+        }
+      };
+      if (status && status !== "all") {
+        filter.status = status as PropertyStatus;
+      }
+    } else if (userRole === "ADMIN") {
       if (status && status !== "all") {
         filter.status = status as PropertyStatus;
       }

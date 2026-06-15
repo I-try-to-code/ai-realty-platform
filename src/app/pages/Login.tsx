@@ -77,7 +77,10 @@ export function Login() {
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
-          Enter your details below to access your dashboard
+          Don't have an account?{" "}
+          <Link to="/register" className="font-semibold text-primary hover:text-primary-hover transition-colors">
+            Sign up
+          </Link>
         </p>
       </div>
 

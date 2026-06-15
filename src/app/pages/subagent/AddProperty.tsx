@@ -187,7 +187,7 @@ export function AddProperty() {
       const data = await res.json();
       if (res.ok) {
         alert(isEdit ? "Property updated successfully!" : "Property listing created successfully and sent for approval!");
-        navigate("/subagent/dashboard");
+        navigate("/subagent/properties");
       } else {
         alert(data.error || "Failed to submit property.");
       }

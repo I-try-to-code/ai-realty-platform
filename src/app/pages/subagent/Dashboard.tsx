@@ -72,18 +72,15 @@ export function SubagentDashboard() {
           setLeads(leadsData);
         }
 
-        // 2. Fetch all properties to filter subagent listings
-        const propertiesRes = await fetch("/api/properties?status=all", {
+        // 2. Fetch only subagent properties directly
+        const propertiesRes = await fetch("/api/properties?myListings=true&status=all", {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         });
         const propertiesData = await propertiesRes.json();
         if (propertiesRes.ok) {
-          const filtered = propertiesData.filter((p: any) => 
-            p.agents?.some((a: any) => a.subagentId === currentUserId)
-          );
-          setMyProperties(filtered);
+          setMyProperties(propertiesData);
         }
       } catch (err) {
         console.error("Error loading subagent dashboard data:", err);
