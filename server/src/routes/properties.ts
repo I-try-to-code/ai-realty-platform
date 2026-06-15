@@ -1,4 +1,5 @@
 import { Router, Response } from "express";
+import jwt from "jsonwebtoken";
 import { prisma } from "../db";
 import { authenticateToken, authorizeRoles, AuthRequest } from "../middlewares/auth";
 import { PropertyStatus, PropertyType, ListingType } from "@prisma/client";
@@ -13,15 +14,48 @@ router.get("/", async (req, res) => {
   const { status, type, city } = req.query;
 
   try {
+    // Check if optional token is provided
+    let userRole: string | null = null;
+    let userId: string | null = null;
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token) {
+      try {
+        const secret = process.env.JWT_SECRET || "ai_realty_secret_session_token_key_12345";
+        const decoded = jwt.verify(token, secret) as any;
+        userRole = decoded.role;
+        userId = decoded.id;
+      } catch (e) {
+        // Ignore token errors for public endpoint
+      }
+    }
+
     const filter: any = {
       deletedAt: null
     };
 
-    // Filter by listing status
-    if (status) {
-      filter.status = status as PropertyStatus;
+    // Filter by listing status based on role permissions
+    if (userRole === "ADMIN") {
+      if (status && status !== "all") {
+        filter.status = status as PropertyStatus;
+      }
+    } else if (userRole === "SUBAGENT" && userId) {
+      const statusFilter = (status && status !== "all") ? (status as PropertyStatus) : undefined;
+      filter.OR = [
+        {
+          status: statusFilter || PropertyStatus.ACTIVE
+        },
+        {
+          agents: {
+            some: {
+              subagentId: userId
+            }
+          },
+          ...(statusFilter ? { status: statusFilter } : {})
+        }
+      ];
     } else {
-      // By default, public search only shows ACTIVE properties
+      // Public / Customer access: only see ACTIVE properties
       filter.status = PropertyStatus.ACTIVE;
     }
 
@@ -121,7 +155,11 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
     propertyType,
     listingType,
     mediaUrls,
-    amenityIds
+    amenityIds,
+    beds,
+    baths,
+    sqft,
+    yearBuilt
   } = req.body;
 
   const agentId = req.user!.id;
@@ -143,6 +181,10 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
         propertyType: propertyType as PropertyType,
         listingType: listingType as ListingType,
         isVerified: false,
+        beds: beds ? parseInt(beds) : null,
+        baths: baths ? parseInt(baths) : null,
+        sqft: sqft ? parseFloat(sqft) : null,
+        yearBuilt: yearBuilt ? parseInt(yearBuilt) : null,
         // Map agents (many-to-many) in the same call
         agents: {
           create: {
@@ -228,7 +270,11 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
     propertyType,
     listingType,
     mediaUrls,
-    amenityIds
+    amenityIds,
+    beds,
+    baths,
+    sqft,
+    yearBuilt
   } = req.body;
 
   const userId = req.user!.id;
@@ -262,7 +308,11 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
         localityId: localityId !== undefined ? localityId : property.localityId,
         propertyType: propertyType !== undefined ? propertyType as PropertyType : property.propertyType,
         listingType: listingType !== undefined ? listingType as ListingType : property.listingType,
-        status: role === "ADMIN" ? property.status : PropertyStatus.PENDING_APPROVAL // reset for re-approval unless admin
+        status: role === "ADMIN" ? property.status : PropertyStatus.PENDING_APPROVAL, // reset for re-approval unless admin
+        beds: beds !== undefined ? (beds ? parseInt(beds) : null) : undefined,
+        baths: baths !== undefined ? (baths ? parseInt(baths) : null) : undefined,
+        sqft: sqft !== undefined ? (sqft ? parseFloat(sqft) : null) : undefined,
+        yearBuilt: yearBuilt !== undefined ? (yearBuilt ? parseInt(yearBuilt) : null) : undefined,
       }
     });
 

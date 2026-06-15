@@ -165,7 +165,8 @@ async function main() {
       isVerified: true,
       beds: 4,
       baths: 3,
-      sqft: 2500
+      sqft: 2500,
+      yearBuilt: 2020
     }
   });
 
@@ -184,7 +185,8 @@ async function main() {
       isVerified: true,
       beds: 3,
       baths: 2,
-      sqft: 1800
+      sqft: 1800,
+      yearBuilt: 2018
     }
   });
 
@@ -203,7 +205,8 @@ async function main() {
       isVerified: false,
       beds: 3,
       baths: 2,
-      sqft: 2200
+      sqft: 2200,
+      yearBuilt: 2021
     }
   });
 

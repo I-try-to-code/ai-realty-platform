@@ -363,7 +363,7 @@ export function PropertyDetails() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Year Built</p>
-                  <p className="font-medium">2020</p>
+                  <p className="font-medium">{property.yearBuilt || "N/A"}</p>
                 </div>
               </div>
             </Card>

@@ -30,7 +30,11 @@ export function PropertyManagement() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/properties");
+      const res = await fetch("/api/properties?status=all", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         // Filter properties belonging to this subagent

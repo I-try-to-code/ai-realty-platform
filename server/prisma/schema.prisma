@@ -150,6 +150,7 @@ model Property {
   beds            Int?
   baths           Int?
   sqft            Float?
+  yearBuilt       Int?
   approvedBy      String?
   approvedAt      DateTime?
   agents          PropertyAgent[]

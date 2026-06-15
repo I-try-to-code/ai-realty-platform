@@ -241,7 +241,7 @@ export function PropertyModeration() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pb-4 border-b border-gray-700">
+                <div className="grid grid-cols-4 gap-3 pb-4 border-b border-gray-700">
                   <div>
                     <p className="text-xs text-gray-400">Bedrooms</p>
                     <p className="text-lg font-semibold text-white">{selectedProperty.beds || 0}</p>
@@ -253,6 +253,10 @@ export function PropertyModeration() {
                   <div>
                     <p className="text-xs text-gray-400">Sqft</p>
                     <p className="text-lg font-semibold text-white">{selectedProperty.sqft || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Year Built</p>
+                    <p className="text-lg font-semibold text-white">{selectedProperty.yearBuilt || "N/A"}</p>
                   </div>
                 </div>
 

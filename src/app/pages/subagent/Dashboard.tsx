@@ -73,7 +73,11 @@ export function SubagentDashboard() {
         }
 
         // 2. Fetch all properties to filter subagent listings
-        const propertiesRes = await fetch("/api/properties");
+        const propertiesRes = await fetch("/api/properties?status=all", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         const propertiesData = await propertiesRes.json();
         if (propertiesRes.ok) {
           const filtered = propertiesData.filter((p: any) => 

@@ -26,6 +26,7 @@ export function AddProperty() {
     beds: "",
     baths: "",
     sqft: "",
+    yearBuilt: "",
     description: "",
     amenityIds: [] as string[],
   });
@@ -68,6 +69,7 @@ export function AddProperty() {
               beds: data.beds ? data.beds.toString() : "",
               baths: data.baths ? data.baths.toString() : "",
               sqft: data.sqft ? data.sqft.toString() : "",
+              yearBuilt: data.yearBuilt ? data.yearBuilt.toString() : "",
               description: data.description || "",
               amenityIds: data.amenities?.map((a: any) => a.amenityId) || []
             });
@@ -104,7 +106,11 @@ export function AddProperty() {
       propertyType: formData.propertyType,
       listingType: formData.listingType,
       mediaUrls: images.length > 0 ? images : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"],
-      amenityIds: formData.amenityIds
+      amenityIds: formData.amenityIds,
+      beds: formData.beds ? parseInt(formData.beds) : null,
+      baths: formData.baths ? parseInt(formData.baths) : null,
+      sqft: formData.sqft ? parseFloat(formData.sqft) : null,
+      yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : null
     };
 
     try {
@@ -346,6 +352,18 @@ export function AddProperty() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Year Built
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.yearBuilt}
+                    onChange={(e) => setFormData({ ...formData, yearBuilt: e.target.value })}
+                    placeholder="2020"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -448,6 +466,14 @@ export function AddProperty() {
                   <div>
                     <p className="text-sm text-gray-600">Type</p>
                     <p className="font-medium text-gray-900 capitalize">{formData.propertyType.toLowerCase()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Bedrooms / Bathrooms</p>
+                    <p className="font-medium text-gray-900">{formData.beds || 0} Beds / {formData.baths || 0} Baths</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Area & Year Built</p>
+                    <p className="font-medium text-gray-900">{formData.sqft || 0} sqft / Built in {formData.yearBuilt || "N/A"}</p>
                   </div>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
