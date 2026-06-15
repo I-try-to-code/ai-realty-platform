@@ -166,6 +166,8 @@ The database seed script generates pre-configured accounts representing each per
 
 ## 🌐 Port Forwarding / Remote Tunneling
 
+as i was forwarding my ports for testing, i have enabled port tunneling. you can disable it by changing `allowedHosts: true` to `allowedHosts: false` inside `vite.config.ts`
+
 If you run the Vite server through a tunneling agent (like `localtunnel` or `ngrok`) to test on mobile devices or share progress, you may receive a **"Blocked request"** warning because of Vite's host checking security.
 
 To prevent this, Vite is pre-configured with `allowedHosts: true` inside `vite.config.ts`, ensuring that third-party tunnel hosts (e.g., `*.loca.lt`) can securely communicate with your development server.
