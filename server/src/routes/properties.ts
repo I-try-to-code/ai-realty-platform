@@ -159,7 +159,13 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
     beds,
     baths,
     sqft,
-    yearBuilt
+    yearBuilt,
+    latitude,
+    longitude,
+    localityName,
+    localityCity,
+    localityState,
+    localityCountry
   } = req.body;
 
   const agentId = req.user!.id;
@@ -169,6 +175,31 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
   }
 
   try {
+    let finalLocalityId = localityId || null;
+
+    if (!finalLocalityId && localityName) {
+      // Find or create locality by name and city
+      let locality = await prisma.locality.findFirst({
+        where: {
+          name: localityName,
+          city: localityCity || null,
+          deletedAt: null
+        }
+      });
+
+      if (!locality) {
+        locality = await prisma.locality.create({
+          data: {
+            name: localityName,
+            city: localityCity || null,
+            state: localityState || null,
+            country: localityCountry || null,
+          }
+        });
+      }
+      finalLocalityId = locality.id;
+    }
+
     // 1. Create the Property
     const property = await prisma.property.create({
       data: {
@@ -176,7 +207,7 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
         description,
         price: parseFloat(price),
         address,
-        localityId,
+        localityId: finalLocalityId,
         status: PropertyStatus.PENDING_APPROVAL, // Default status for moderation
         propertyType: propertyType as PropertyType,
         listingType: listingType as ListingType,
@@ -185,6 +216,8 @@ router.post("/", authenticateToken, authorizeRoles("SUBAGENT"), async (req: Auth
         baths: baths ? parseInt(baths) : null,
         sqft: sqft ? parseFloat(sqft) : null,
         yearBuilt: yearBuilt ? parseInt(yearBuilt) : null,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         // Map agents (many-to-many) in the same call
         agents: {
           create: {
@@ -274,7 +307,9 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
     beds,
     baths,
     sqft,
-    yearBuilt
+    yearBuilt,
+    latitude,
+    longitude
   } = req.body;
 
   const userId = req.user!.id;
@@ -297,6 +332,35 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
       return res.status(403).json({ error: "Unauthorized. You are not assigned as an agent for this property." });
     }
 
+    let finalLocalityId = localityId !== undefined ? localityId : undefined;
+
+    if (req.body.localityName !== undefined) {
+      if (req.body.localityName) {
+        // Find or create locality by name and city
+        let locality = await prisma.locality.findFirst({
+          where: {
+            name: req.body.localityName,
+            city: req.body.localityCity || null,
+            deletedAt: null
+          }
+        });
+
+        if (!locality) {
+          locality = await prisma.locality.create({
+            data: {
+              name: req.body.localityName,
+              city: req.body.localityCity || null,
+              state: req.body.localityState || null,
+              country: req.body.localityCountry || null,
+            }
+          });
+        }
+        finalLocalityId = locality.id;
+      } else {
+        finalLocalityId = null;
+      }
+    }
+
     // 2. Update basic fields
     const updatedProperty = await prisma.property.update({
       where: { id },
@@ -305,7 +369,7 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
         description: description !== undefined ? description : property.description,
         price: price !== undefined ? parseFloat(price) : property.price,
         address: address !== undefined ? address : property.address,
-        localityId: localityId !== undefined ? localityId : property.localityId,
+        localityId: finalLocalityId !== undefined ? finalLocalityId : property.localityId,
         propertyType: propertyType !== undefined ? propertyType as PropertyType : property.propertyType,
         listingType: listingType !== undefined ? listingType as ListingType : property.listingType,
         status: role === "ADMIN" ? property.status : PropertyStatus.PENDING_APPROVAL, // reset for re-approval unless admin
@@ -313,6 +377,8 @@ router.put("/:id", authenticateToken, authorizeRoles("SUBAGENT", "ADMIN"), async
         baths: baths !== undefined ? (baths ? parseInt(baths) : null) : undefined,
         sqft: sqft !== undefined ? (sqft ? parseFloat(sqft) : null) : undefined,
         yearBuilt: yearBuilt !== undefined ? (yearBuilt ? parseInt(yearBuilt) : null) : undefined,
+        latitude: latitude !== undefined ? (latitude ? parseFloat(latitude) : null) : undefined,
+        longitude: longitude !== undefined ? (longitude ? parseFloat(longitude) : null) : undefined,
       }
     });
 

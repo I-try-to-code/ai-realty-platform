@@ -13,20 +13,27 @@ export function AddProperty() {
   const isEdit = !!id;
   const [currentStep, setCurrentStep] = useState(0);
   const [images, setImages] = useState<string[]>([]);
-  const [localities, setLocalities] = useState<any[]>([]);
   const [amenitiesList, setAmenitiesList] = useState<any[]>([]);
+
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
     propertyType: "VILLA",
     listingType: "SALE",
     price: "",
-    localityId: "",
     address: "",
     beds: "",
     baths: "",
     sqft: "",
     yearBuilt: "",
+    latitude: "",
+    longitude: "",
+    localityName: "",
+    localityCity: "",
+    localityState: "",
+    localityCountry: "",
     description: "",
     amenityIds: [] as string[],
   });
@@ -34,19 +41,13 @@ export function AddProperty() {
   useEffect(() => {
     async function loadConfigData() {
       try {
-        const locRes = await fetch("/api/properties/localities/all");
-        if (locRes.ok) {
-          const locData = await locRes.json();
-          setLocalities(locData);
-        }
-
         const amRes = await fetch("/api/properties/amenities/all");
         if (amRes.ok) {
           const amData = await amRes.json();
           setAmenitiesList(amData);
         }
       } catch (err) {
-        console.error("Error loading localities/amenities:", err);
+        console.error("Error loading amenities:", err);
       }
     }
     loadConfigData();
@@ -64,12 +65,17 @@ export function AddProperty() {
               propertyType: data.propertyType || "VILLA",
               listingType: data.listingType || "SALE",
               price: data.price ? data.price.toString() : "",
-              localityId: data.localityId || "",
               address: data.address || "",
               beds: data.beds ? data.beds.toString() : "",
               baths: data.baths ? data.baths.toString() : "",
               sqft: data.sqft ? data.sqft.toString() : "",
               yearBuilt: data.yearBuilt ? data.yearBuilt.toString() : "",
+              latitude: data.latitude ? data.latitude.toString() : "",
+              longitude: data.longitude ? data.longitude.toString() : "",
+              localityName: data.locality?.name || "",
+              localityCity: data.locality?.city || "",
+              localityState: data.locality?.state || "",
+              localityCountry: data.locality?.country || "",
               description: data.description || "",
               amenityIds: data.amenities?.map((a: any) => a.amenityId) || []
             });
@@ -91,9 +97,55 @@ export function AddProperty() {
     setImages([...images, ...mockImages]);
   };
 
+  const handleAddressChange = async (val: string) => {
+    setFormData(prev => ({ ...prev, address: val }));
+    if (val.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(val)}&apiKey=1232248040f54a0282596eb8fab64d12`);
+      if (res.ok) {
+        const data = await res.json();
+        const features = data.features || [];
+        setSuggestions(features);
+        setShowSuggestions(features.length > 0);
+      }
+    } catch (err) {
+      console.error("Geoapify autocomplete error:", err);
+    }
+  };
+
+  const handleSelectSuggestion = (feature: any) => {
+    const props = feature.properties || {};
+    const formatted = props.formatted || "";
+    const lat = props.lat;
+    const lon = props.lon;
+    
+    const localityName = props.suburb || props.neighbourhood || props.county || props.city || "Unknown Locality";
+    const localityCity = props.city || props.county || "Unknown City";
+    const localityState = props.state || "";
+    const localityCountry = props.country || "";
+
+    setFormData(prev => ({
+      ...prev,
+      address: formatted,
+      latitude: lat ? lat.toString() : "",
+      longitude: lon ? lon.toString() : "",
+      localityName,
+      localityCity,
+      localityState,
+      localityCountry
+    }));
+
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleSubmit = async () => {
-    if (!formData.title || !formData.price || !formData.localityId || !formData.propertyType || !formData.listingType) {
-      alert("Please fill in all required basic fields.");
+    if (!formData.title || !formData.price || !formData.address || !formData.propertyType || !formData.listingType) {
+      alert("Please fill in all required basic fields, including address.");
       return;
     }
 
@@ -102,7 +154,6 @@ export function AddProperty() {
       description: formData.description,
       price: parseFloat(formData.price.replace(/,/g, "")),
       address: formData.address,
-      localityId: formData.localityId,
       propertyType: formData.propertyType,
       listingType: formData.listingType,
       mediaUrls: images.length > 0 ? images : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"],
@@ -110,7 +161,13 @@ export function AddProperty() {
       beds: formData.beds ? parseInt(formData.beds) : null,
       baths: formData.baths ? parseInt(formData.baths) : null,
       sqft: formData.sqft ? parseFloat(formData.sqft) : null,
-      yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : null
+      yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : null,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      localityName: formData.localityName,
+      localityCity: formData.localityCity,
+      localityState: formData.localityState,
+      localityCountry: formData.localityCountry
     };
 
     try {
@@ -148,8 +205,6 @@ export function AddProperty() {
         : [...formData.amenityIds, amenityId],
     });
   };
-
-  const selectedLocality = localities.find(l => l.id === formData.localityId);
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -275,37 +330,51 @@ export function AddProperty() {
                     />
                   </div>
                 </div>
-                <div>
+                <div className="relative md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Locality *
-                  </label>
-                  <select
-                    value={formData.localityId}
-                    onChange={(e) => setFormData({ ...formData, localityId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
-                  >
-                    <option value="">Select Locality</option>
-                    {localities.map((loc: any) => (
-                      <option key={loc.id} value={loc.id}>
-                        {loc.name} ({loc.city}, {loc.state})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Street Address
+                    Property Address *
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-gray-400" />
                     <input
                       type="text"
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      onChange={(e) => handleAddressChange(e.target.value)}
+                      onFocus={() => {
+                        if (suggestions.length > 0) setShowSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowSuggestions(false), 200);
+                      }}
                       placeholder="e.g. 123 Dolores St"
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white"
+                      autoComplete="off"
                     />
                   </div>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-100">
+                      {suggestions.map((item: any, i: number) => {
+                        const formatted = item.properties?.formatted || "";
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            onMouseDown={() => handleSelectSuggestion(item)}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            {formatted}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {formData.latitude && formData.longitude && (
+                    <div className="mt-2 flex items-center space-x-2">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                        📍 Location Captured: {parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -461,7 +530,9 @@ export function AddProperty() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Locality</p>
-                    <p className="font-medium text-gray-900">{selectedLocality ? `${selectedLocality.name} (${selectedLocality.city})` : "Not set"}</p>
+                    <p className="font-medium text-gray-900">
+                      {formData.localityName ? `${formData.localityName}${formData.localityCity ? `, ${formData.localityCity}` : ""}` : "Not set"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Type</p>
