@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Search, Sparkles, Shield, TrendingUp, MessageSquare, Heart, Star } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -61,6 +62,39 @@ export function CustomerLanding() {
   const token = localStorage.getItem("token");
   const searchPath = token ? "/customer/search" : "/search";
   const aiChatPath = token ? "/customer/ai-chat" : "/ai-chat";
+
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProperties() {
+      try {
+        const res = await fetch("/api/properties");
+        if (res.ok) {
+          const data = await res.json();
+          setProperties(data.slice(0, 3));
+        }
+      } catch (err) {
+        console.error("Error fetching featured properties:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProperties();
+  }, []);
+
+  const displayProperties = properties.length > 0 ? properties.map(p => ({
+    id: p.id,
+    image: p.media && p.media[0] ? p.media[0].url : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+    price: p.price ? `$${p.price.toLocaleString()}` : "Contact Agent",
+    title: p.title,
+    location: p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality"),
+    beds: p.beds || 0,
+    baths: p.baths || 0,
+    sqft: p.sqft || 0,
+    aiScore: p.beds && p.beds >= 3 ? 92 : 85,
+    aiReason: p.description ? (p.description.length > 100 ? p.description.slice(0, 100) + "..." : p.description) : "Premium residential structure with customized features."
+  })) : featuredProperties;
 
   return (
     <div>
@@ -165,9 +199,15 @@ export function CustomerLanding() {
             </Link>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {featuredProperties.map((property) => (
-              <PropertyCard key={property.id} {...property} />
-            ))}
+            {loading ? (
+              <div className="col-span-3 flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              displayProperties.map((property) => (
+                <PropertyCard key={property.id} {...property} />
+              ))
+            )}
           </div>
         </div>
       </section>

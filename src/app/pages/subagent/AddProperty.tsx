@@ -122,7 +122,7 @@ export function AddProperty() {
     const formatted = props.formatted || "";
     const lat = props.lat;
     const lon = props.lon;
-    
+
     const localityName = props.suburb || props.neighbourhood || props.county || props.city || "Unknown Locality";
     const localityCity = props.city || props.county || "Unknown City";
     const localityState = props.state || "";
@@ -223,27 +223,24 @@ export function AddProperty() {
             <div key={step} className="flex items-center flex-1">
               <div className="flex items-center">
                 <div
-                  className={`size-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    index <= currentStep
+                  className={`size-10 rounded-full flex items-center justify-center font-semibold transition-colors ${index <= currentStep
                       ? "bg-primary text-white"
                       : "bg-gray-200 text-gray-600"
-                  }`}
+                    }`}
                 >
                   {index < currentStep ? <CheckCircle2 className="size-6" /> : index + 1}
                 </div>
                 <span
-                  className={`ml-2 text-sm font-medium ${
-                    index <= currentStep ? "text-gray-900" : "text-gray-500"
-                  }`}
+                  className={`ml-2 text-sm font-medium ${index <= currentStep ? "text-gray-900" : "text-gray-500"
+                    }`}
                 >
                   {step}
                 </span>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`flex-1 h-1 mx-4 rounded ${
-                    index < currentStep ? "bg-primary" : "bg-gray-200"
-                  }`}
+                  className={`flex-1 h-1 mx-4 rounded ${index < currentStep ? "bg-primary" : "bg-gray-200"
+                    }`}
                 />
               )}
             </div>
@@ -461,11 +458,10 @@ export function AddProperty() {
                     <button
                       key={amenity.id}
                       onClick={() => toggleAmenity(amenity.id)}
-                      className={`p-3 rounded-lg border-2 text-sm font-medium transition-all text-left ${
-                        formData.amenityIds.includes(amenity.id)
+                      className={`p-3 rounded-lg border-2 text-sm font-medium transition-all text-left ${formData.amenityIds.includes(amenity.id)
                           ? "border-primary bg-blue-50 text-primary"
                           : "border-gray-200 text-gray-700 hover:border-gray-300"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         {amenity.name}
