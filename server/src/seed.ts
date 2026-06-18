@@ -68,10 +68,22 @@ async function main() {
     }
   });
 
+  const agentTesting = await prisma.user.create({
+    data: {
+      email: "agent_testing@example.com",
+      name: "Agent Testing",
+      phone: "+15559999",
+      passwordHash,
+      role: Role.SUBAGENT,
+      emailVerified: true
+    }
+  });
+
   console.log("Created users:", {
     customer: customer.email,
     subagent: subagent.email,
-    admin: admin.email
+    admin: admin.email,
+    agentTesting: agentTesting.email
   });
 
   // 2. Create KYC Verification for Subagent
@@ -82,11 +94,22 @@ async function main() {
         license_number: "DL-9988221",
         verified_country: "US"
       },
+      status: KYCStatus.APPROVED
+    }
+  });
+
+  await prisma.kYCVerification.create({
+    data: {
+      userId: agentTesting.id,
+      documents: {
+        license_number: "DL-1234567",
+        verified_country: "US"
+      },
       status: KYCStatus.PENDING
     }
   });
 
-  // 3. Create Locality
+  // 3. Create Localities
   const locality1 = await prisma.locality.create({
     data: {
       name: "Mission District",
@@ -144,6 +167,17 @@ async function main() {
         price_trend: "Increasing",
         average_price_sqft: 600
       }
+    }
+  });
+
+  const locality4 = await prisma.locality.create({
+    data: {
+      name: "Charleston Terrace",
+      city: "Mountain View",
+      state: "CA",
+      country: "US",
+      latitude: 37.4223,
+      longitude: -122.0857
     }
   });
 
@@ -210,6 +244,56 @@ async function main() {
     }
   });
 
+  const propAadsfg = await prisma.property.create({
+    data: {
+      title: "aadsfg",
+      description: "A simple mock property located near Ghansoli.",
+      price: 556.00,
+      address: "Ghansoli Station Road, Ghansoli, Navi Mumbai - 400701, MH, India",
+      latitude: 19.1234,
+      longitude: 73.0123,
+      status: PropertyStatus.ACTIVE,
+      propertyType: PropertyType.VILLA,
+      listingType: ListingType.SALE,
+      isVerified: false
+    }
+  });
+
+  const propTesting = await prisma.property.create({
+    data: {
+      title: "Brand New Testing Villa",
+      description: "Beautiful testing villa with dynamic autocomplete geocoded details.",
+      price: 985000.00,
+      address: "1600 Amphitheatre Pkwy, Mountain View, CA",
+      latitude: 37.4223,
+      longitude: -122.0857,
+      localityId: locality4.id,
+      status: PropertyStatus.PENDING_APPROVAL,
+      propertyType: PropertyType.VILLA,
+      listingType: ListingType.SALE,
+      isVerified: false,
+      beds: 3,
+      baths: 2,
+      sqft: 1850,
+      yearBuilt: 2022
+    }
+  });
+
+  const propSada = await prisma.property.create({
+    data: {
+      title: "sada",
+      description: "Another test property listing.",
+      price: 1000000.00,
+      address: "Downtown LA Main St, Los Angeles, CA",
+      latitude: 34.0522,
+      longitude: -118.2437,
+      status: PropertyStatus.ACTIVE,
+      propertyType: PropertyType.APARTMENT,
+      listingType: ListingType.SALE,
+      isVerified: true
+    }
+  });
+
   console.log("Created properties.");
 
   // 5. Map Properties to Subagents
@@ -232,6 +316,24 @@ async function main() {
         subagentId: subagent.id,
         primaryAgent: true,
         commissionPercentage: 2.5
+      },
+      {
+        propertyId: propAadsfg.id,
+        subagentId: subagent.id,
+        primaryAgent: true,
+        commissionPercentage: null
+      },
+      {
+        propertyId: propTesting.id,
+        subagentId: agentTesting.id,
+        primaryAgent: true,
+        commissionPercentage: null
+      },
+      {
+        propertyId: propSada.id,
+        subagentId: subagent.id,
+        primaryAgent: true,
+        commissionPercentage: null
       }
     ]
   });
@@ -259,6 +361,27 @@ async function main() {
         fileType: "image/jpeg",
         url: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
         size: 345091
+      },
+      {
+        propertyId: propAadsfg.id,
+        fileName: "media_1.jpg",
+        fileType: "image/jpeg",
+        url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+        size: 12345
+      },
+      {
+        propertyId: propTesting.id,
+        fileName: "media_1.jpg",
+        fileType: "image/jpeg",
+        url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+        size: 12345
+      },
+      {
+        propertyId: propSada.id,
+        fileName: "media_1.jpg",
+        fileType: "image/jpeg",
+        url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+        size: 12345
       }
     ]
   });
