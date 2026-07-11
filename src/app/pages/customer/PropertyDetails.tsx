@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, Link, useLocation } from "react-router";
 import {
   Heart,
   Share2,
@@ -25,12 +25,14 @@ import { Card } from "../../components/Card";
 export function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [saved, setSaved] = useState(false);
   const [interestSubmitting, setInterestSubmitting] = useState(false);
   const [recommendation, setRecommendation] = useState<any>(null);
+  const [similarProperties, setSimilarProperties] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadPropertyDetails() {
@@ -62,6 +64,21 @@ export function PropertyDetails() {
               if (match) {
                 setRecommendation(match);
               }
+            }
+          }
+
+          // Fetch similar properties
+          const simRes = await fetch(`/api/properties?type=${data.propertyType}`);
+          if (simRes.ok) {
+            const simData = await simRes.json();
+            const filtered = simData.filter((p: any) => p.id !== id).slice(0, 3);
+            setSimilarProperties(filtered);
+          } else {
+            const allRes = await fetch(`/api/properties`);
+            if (allRes.ok) {
+              const allData = await allRes.json();
+              const filtered = allData.filter((p: any) => p.id !== id).slice(0, 3);
+              setSimilarProperties(filtered);
             }
           }
         } else {
@@ -487,25 +504,42 @@ export function PropertyDetails() {
             </Card>
 
             {/* Similar Properties */}
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-3">Similar Properties</h3>
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex space-x-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                    <img
-                      src={`https://images.unsplash.com/photo-160060${i}685154340-be6161a56a0c?w=200`}
-                      alt=""
-                      className="size-20 rounded-lg object-cover"
-                    />
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">Modern Home</p>
-                      <p className="text-xs text-gray-600">San Francisco, CA</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">$780,000</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            {similarProperties.length > 0 && (
+              <Card>
+                <h3 className="font-semibold text-gray-900 mb-3">Similar Properties</h3>
+                <div className="space-y-3">
+                  {similarProperties.map((p) => {
+                    const simImageUrl = p.media && p.media[0] 
+                      ? p.media[0].url 
+                      : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200";
+                    const simFormattedPrice = p.price 
+                      ? `$${p.price.toLocaleString()}` 
+                      : "Contact Agent";
+                    const simPropertyLocation = p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality");
+                    const isCustomerPortal = location.pathname.startsWith('/customer');
+
+                    return (
+                      <Link 
+                        key={p.id} 
+                        to={`${isCustomerPortal ? '/customer/property' : '/property'}/${p.id}`}
+                        className="flex space-x-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors block"
+                      >
+                        <img
+                          src={simImageUrl}
+                          alt={p.title}
+                          className="size-20 rounded-lg object-cover flex-shrink-0"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm truncate max-w-[180px]">{p.title}</p>
+                          <p className="text-xs text-gray-600 truncate max-w-[180px]">{simPropertyLocation}</p>
+                          <p className="text-sm font-semibold text-gray-900 mt-1">{simFormattedPrice}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
