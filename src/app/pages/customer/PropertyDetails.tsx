@@ -30,6 +30,7 @@ export function PropertyDetails() {
   const [currentImage, setCurrentImage] = useState(0);
   const [saved, setSaved] = useState(false);
   const [interestSubmitting, setInterestSubmitting] = useState(false);
+  const [recommendation, setRecommendation] = useState<any>(null);
 
   useEffect(() => {
     async function loadPropertyDetails() {
@@ -40,7 +41,7 @@ export function PropertyDetails() {
           const data = await res.json();
           setProperty(data);
 
-          // Check if this property is in user's saved list
+          // Check if this property is in user's saved list and fetch AI recommendations
           const token = localStorage.getItem("token");
           if (token) {
             const savedRes = await fetch("/api/saved-properties", {
@@ -50,6 +51,17 @@ export function PropertyDetails() {
               const savedList = await savedRes.json();
               const isSaved = savedList.some((p: any) => p.id === id);
               setSaved(isSaved);
+            }
+
+            const recRes = await fetch("/api/ai/recommendations", {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (recRes.ok) {
+              const recList = await recRes.json();
+              const match = recList.find((r: any) => r.propertyId === id);
+              if (match) {
+                setRecommendation(match);
+              }
             }
           }
         } else {
@@ -319,34 +331,46 @@ export function PropertyDetails() {
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-900">AI Match Score</h3>
-                    <Badge variant="ai">95% Match</Badge>
+                    <Badge variant="ai">
+                      {recommendation 
+                        ? `${Math.round(recommendation.score <= 1.0 ? recommendation.score * 100 : recommendation.score)}% Match`
+                        : "AI Enabled"
+                      }
+                    </Badge>
                   </div>
                   <h4 className="font-medium text-gray-900 mb-2">Why this property suits you:</h4>
                   <ul className="space-y-2">
-                    <li className="flex items-start">
-                      <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">
-                        Matches your preference for modern architecture with open floor plans
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">
-                        Located in a family-friendly neighborhood with top-rated schools nearby
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">
-                        Within your budget range of $800K - $900K
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">
-                        Features smart home technology aligned with your preferences
-                      </span>
-                    </li>
+                    {recommendation ? (
+                      <>
+                        <li className="flex items-start">
+                          <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700">{recommendation.explanation}</span>
+                        </li>
+                        {property.price && (
+                          <li className="flex items-start">
+                            <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700">Priced at ${property.price.toLocaleString()} within standard market valuation.</span>
+                          </li>
+                        )}
+                        {property.locality?.name && (
+                          <li className="flex items-start">
+                            <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700">Located in the highly desirable area of {property.locality.name}.</span>
+                          </li>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <li className="flex items-start">
+                          <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700">Sign in to get personalized match scores calculated by our AI engine.</span>
+                        </li>
+                        <li className="flex items-start">
+                          <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700">Our AI model considers budget, desired bedroom layout, and neighborhood preferences.</span>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
               </div>

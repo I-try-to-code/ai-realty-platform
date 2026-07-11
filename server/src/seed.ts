@@ -112,72 +112,72 @@ async function main() {
   // 3. Create Localities
   const locality1 = await prisma.locality.create({
     data: {
-      name: "Mission District",
-      city: "San Francisco",
-      state: "CA",
-      country: "US",
-      latitude: 37.7599,
-      longitude: -122.4148,
+      name: "Andheri West",
+      city: "Mumbai",
+      state: "MH",
+      country: "IN",
+      latitude: 19.1363,
+      longitude: 72.8293,
       poi: {
-        schools: ["Mission High School", "Everett Middle School"],
-        parks: ["Dolores Park"],
-        transport: ["24th St Mission BART"]
+        schools: ["Andheri High School", "Rajhans Vidyalaya"],
+        parks: ["Nana Nani Park"],
+        transport: ["Andheri Metro Station", "Andheri Railway Station"]
       },
       intelligence: {
         market_sentiment: "High Demand",
         price_trend: "Increasing",
-        average_price_sqft: 1100
+        average_price_sqft: 22000
       }
     }
   });
 
   const locality2 = await prisma.locality.create({
     data: {
-      name: "Downtown",
-      city: "Los Angeles",
-      state: "CA",
-      country: "US",
-      latitude: 34.0407,
-      longitude: -118.2468,
+      name: "Bandra West",
+      city: "Mumbai",
+      state: "MH",
+      country: "IN",
+      latitude: 19.0596,
+      longitude: 72.8295,
       poi: {
-        shopping: ["The Bloc", "FIGat7th"],
-        parks: ["Grand Hope Park"]
+        shopping: ["Linking Road", "Hill Road"],
+        parks: ["Bandstand Promenade", "Carter Road Promenade"]
       },
       intelligence: {
-        market_sentiment: "Stable",
-        price_trend: "Flat",
-        average_price_sqft: 850
+        market_sentiment: "Very High Demand",
+        price_trend: "Increasing",
+        average_price_sqft: 45000
       }
     }
   });
 
   const locality3 = await prisma.locality.create({
     data: {
-      name: "Downtown",
-      city: "Austin",
-      state: "TX",
-      country: "US",
-      latitude: 30.2672,
-      longitude: -97.7431,
+      name: "Goregaon East",
+      city: "Mumbai",
+      state: "MH",
+      country: "IN",
+      latitude: 19.1634,
+      longitude: 72.8560,
       poi: {
-        dining: ["Rainey Street", "6th Street"]
+        dining: ["Oberoi Mall Food Court", "Local Diners"]
       },
       intelligence: {
         market_sentiment: "Expanding",
         price_trend: "Increasing",
-        average_price_sqft: 600
+        average_price_sqft: 18000
       }
     }
   });
 
   const locality4 = await prisma.locality.create({
     data: {
-      name: "Charleston Terrace",
-      city: "Mountain View",
-      state: "CA",
-      country: "US",
-      latitude: 37.4223,
-      longitude: -122.0857
+      name: "Airoli",
+      city: "Navi Mumbai",
+      state: "MH",
+      country: "IN",
+      latitude: 19.1579,
+      longitude: 72.9935
     }
   });
 
@@ -186,12 +186,12 @@ async function main() {
   // 4. Create Properties
   const prop1 = await prisma.property.create({
     data: {
-      title: "Modern Family Home",
-      description: "Matches your preference for modern architecture and family-friendly neighborhoods. Built in 2020 with smart home integrations and solar panels.",
-      price: 850000.00,
-      address: "123 Dolores St, San Francisco, CA",
-      latitude: 37.7599,
-      longitude: -122.4148,
+      title: "Modern Luxury Villa",
+      description: "Matches your preference for premium architecture and central family-friendly neighborhoods. Built in 2020 with modular kitchen, smart home integrations, and private terrace gardens.",
+      price: 85000000.00, // INR 8.5 Crore
+      address: "Juhu Versova Link Road, Andheri West, Mumbai, MH, India",
+      latitude: 19.1363,
+      longitude: 72.8293,
       localityId: locality1.id,
       status: PropertyStatus.ACTIVE,
       propertyType: PropertyType.VILLA,
@@ -206,12 +206,12 @@ async function main() {
 
   const prop2 = await prisma.property.create({
     data: {
-      title: "Luxury Penthouse",
-      description: "City views and proximity to downtown match your lifestyle. Full-service concierge and rooftop swimming pool access.",
-      price: 1200000.00,
-      address: "700 Grand Ave, Los Angeles, CA",
-      latitude: 34.0407,
-      longitude: -118.2468,
+      title: "Sea Facing Premium Apartment",
+      description: "Breathtaking Arabian sea views and proximity to Bandstand match your luxury lifestyle. Full-service concierge, backup power, and dedicated basement parking spaces.",
+      price: 120000000.00, // INR 12 Crore
+      address: "Carter Road Promenade, Bandra West, Mumbai, MH, India",
+      latitude: 19.0596,
+      longitude: 72.8295,
       localityId: locality2.id,
       status: PropertyStatus.ACTIVE,
       propertyType: PropertyType.APARTMENT,
@@ -226,12 +226,12 @@ async function main() {
 
   const prop3 = await prisma.property.create({
     data: {
-      title: "Suburban Retreat",
-      description: "Quiet neighborhood with excellent schools nearby. Huge backyard and beautiful landscaping.",
-      price: 650000.00,
-      address: "1005 Congress Ave, Austin, TX",
-      latitude: 30.2672,
-      longitude: -97.7431,
+      title: "Suburban Heights Penthouse",
+      description: "Quiet luxury penthouse overlooking Aarey Colony greens. Proximity to Western Express Highway and Oberoi Mall.",
+      price: 65000000.00, // INR 6.5 Crore
+      address: "Gokuldham, Goregaon East, Mumbai, MH, India",
+      latitude: 19.1634,
+      longitude: 72.8560,
       localityId: locality3.id,
       status: PropertyStatus.PENDING_APPROVAL,
       propertyType: PropertyType.VILLA,
@@ -244,18 +244,22 @@ async function main() {
     }
   });
 
-  const propAadsfg = await prisma.property.create({
+  const propCoastal = await prisma.property.create({
     data: {
-      title: "aadsfg",
-      description: "A simple mock property located near Ghansoli.",
-      price: 556.00,
-      address: "Ghansoli Station Road, Ghansoli, Navi Mumbai - 400701, MH, India",
-      latitude: 19.1234,
-      longitude: 73.0123,
+      title: "Sea Breeze Condo",
+      description: "Beautiful creek view with modern amenities, large balcony, and direct access to dynamic IT hubs and railway link.",
+      price: 15000000.00, // INR 1.5 Crore
+      address: "Sector 15, Ghansoli, Navi Mumbai, MH, India",
+      latitude: 19.1254,
+      longitude: 73.0163,
       status: PropertyStatus.ACTIVE,
-      propertyType: PropertyType.VILLA,
+      propertyType: PropertyType.APARTMENT,
       listingType: ListingType.SALE,
-      isVerified: false
+      isVerified: true,
+      beds: 2,
+      baths: 2,
+      sqft: 1100,
+      yearBuilt: 2015
     }
   });
 
@@ -263,10 +267,10 @@ async function main() {
     data: {
       title: "Brand New Testing Villa",
       description: "Beautiful testing villa with dynamic autocomplete geocoded details.",
-      price: 985000.00,
-      address: "1600 Amphitheatre Pkwy, Mountain View, CA",
-      latitude: 37.4223,
-      longitude: -122.0857,
+      price: 32000000.00, // INR 3.2 Crore
+      address: "Sector 5, Airoli, Navi Mumbai, MH, India",
+      latitude: 19.1579,
+      longitude: 72.9935,
       localityId: locality4.id,
       status: PropertyStatus.PENDING_APPROVAL,
       propertyType: PropertyType.VILLA,
@@ -279,18 +283,22 @@ async function main() {
     }
   });
 
-  const propSada = await prisma.property.create({
+  const propLoft = await prisma.property.create({
     data: {
-      title: "sada",
-      description: "Another test property listing.",
-      price: 1000000.00,
-      address: "Downtown LA Main St, Los Angeles, CA",
-      latitude: 34.0522,
-      longitude: -118.2437,
+      title: "Industrial Studio Loft",
+      description: "Stunning industrial design studio loft located in the heart of Andheri East commercial hub. Features high ceilings, modern aesthetics, and modular fixtures.",
+      price: 25000000.00, // INR 2.5 Crore
+      address: "JB Nagar, Andheri East, Mumbai, MH, India",
+      latitude: 19.1176,
+      longitude: 72.8631,
       status: PropertyStatus.ACTIVE,
       propertyType: PropertyType.APARTMENT,
       listingType: ListingType.SALE,
-      isVerified: true
+      isVerified: true,
+      beds: 2,
+      baths: 2,
+      sqft: 1450,
+      yearBuilt: 2019
     }
   });
 
@@ -318,7 +326,7 @@ async function main() {
         commissionPercentage: 2.5
       },
       {
-        propertyId: propAadsfg.id,
+        propertyId: propCoastal.id,
         subagentId: subagent.id,
         primaryAgent: true,
         commissionPercentage: null
@@ -330,7 +338,7 @@ async function main() {
         commissionPercentage: null
       },
       {
-        propertyId: propSada.id,
+        propertyId: propLoft.id,
         subagentId: subagent.id,
         primaryAgent: true,
         commissionPercentage: null
@@ -363,11 +371,11 @@ async function main() {
         size: 345091
       },
       {
-        propertyId: propAadsfg.id,
-        fileName: "media_1.jpg",
+        propertyId: propCoastal.id,
+        fileName: "coastal_condo.jpg",
         fileType: "image/jpeg",
-        url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
-        size: 12345
+        url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+        size: 145000
       },
       {
         propertyId: propTesting.id,
@@ -377,11 +385,11 @@ async function main() {
         size: 12345
       },
       {
-        propertyId: propSada.id,
-        fileName: "media_1.jpg",
+        propertyId: propLoft.id,
+        fileName: "urban_loft.jpg",
         fileType: "image/jpeg",
-        url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
-        size: 12345
+        url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
+        size: 185000
       }
     ]
   });
@@ -409,9 +417,9 @@ async function main() {
     data: {
       userId: customer.id,
       preferences: {
-        budget: 900000,
+        budget: 90000000,
         beds: 4,
-        features: ["Modern Architecture", "Dolores Park"]
+        features: ["Modern Architecture", "Bandra West"]
       }
     }
   });
@@ -422,13 +430,13 @@ async function main() {
         userId: customer.id,
         propertyId: prop1.id,
         score: 0.95,
-        explanation: "Matches your preference for modern architecture and Dolores Park proximity"
+        explanation: "Matches your preference for modern architecture and Andheri West proximity"
       },
       {
         userId: customer.id,
         propertyId: prop2.id,
         score: 0.88,
-        explanation: "Matches your budget and preference for premium layouts"
+        explanation: "Matches your budget and preference for Bandra West sea facing layouts"
       }
     ]
   });
