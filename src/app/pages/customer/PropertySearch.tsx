@@ -90,10 +90,10 @@ export function PropertySearch() {
     if (priceRange !== "all") {
       result = result.filter((p) => {
         if (!p.price) return false;
-        if (priceRange === "0-500k") return p.price < 500000;
-        if (priceRange === "500k-1m") return p.price >= 500000 && p.price <= 1000000;
-        if (priceRange === "1m-2m") return p.price >= 1000000 && p.price <= 2000000;
-        if (priceRange === "2m+") return p.price > 2000000;
+        if (priceRange === "0-2cr") return p.price < 20000000;
+        if (priceRange === "2cr-5cr") return p.price >= 20000000 && p.price <= 50000000;
+        if (priceRange === "5cr-10cr") return p.price >= 50000000 && p.price <= 100000000;
+        if (priceRange === "10cr+") return p.price > 100000000;
         return true;
       });
     }
@@ -263,10 +263,10 @@ export function PropertySearch() {
                   onChange={(e) => setPriceRange(e.target.value)}
                 >
                   <option value="all">All Prices</option>
-                  <option value="0-500k">Under $500K</option>
-                  <option value="500k-1m">$500K - $1M</option>
-                  <option value="1m-2m">$1M - $2M</option>
-                  <option value="2m+">$2M+</option>
+                  <option value="0-2cr">Under ₹2 Cr</option>
+                  <option value="2cr-5cr">₹2 Cr - ₹5 Cr</option>
+                  <option value="5cr-10cr">₹5 Cr - ₹10 Cr</option>
+                  <option value="10cr+">₹10 Cr+</option>
                 </select>
               </div>
 
@@ -345,7 +345,7 @@ export function PropertySearch() {
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredProperties.map((property: any) => {
                   const imageUrl = property.media && property.media[0] ? property.media[0].url : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800";
-                  const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+                  const formattedPrice = property.price ? `₹${property.price.toLocaleString('en-IN')}` : "Contact Agent";
                   const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
                   
                   return (

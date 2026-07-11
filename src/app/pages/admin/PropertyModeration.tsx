@@ -139,7 +139,7 @@ export function PropertyModeration() {
             ) : (
               properties.map((property) => {
                 const coverImage = property.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400";
-                const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+                const formattedPrice = property.price ? `₹${property.price.toLocaleString('en-IN')}` : "Contact Agent";
                 const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
                 const agentRelation = property.agents?.[0];
                 const agentName = agentRelation?.subagent?.name || "John Doe";
@@ -237,7 +237,7 @@ export function PropertyModeration() {
                     {selectedProperty.address || (selectedProperty.locality ? `${selectedProperty.locality.name}, ${selectedProperty.locality.city}` : "Unknown Locality")}
                   </p>
                   <p className="text-3xl font-bold text-white mb-4">
-                    {selectedProperty.price ? `$${selectedProperty.price.toLocaleString()}` : "Contact Agent"}
+                    {selectedProperty.price ? `₹${selectedProperty.price.toLocaleString('en-IN')}` : "Contact Agent"}
                   </p>
                 </div>
 

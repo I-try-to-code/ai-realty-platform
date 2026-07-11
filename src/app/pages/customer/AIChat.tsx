@@ -31,8 +31,8 @@ const initialMessages: Message[] = [
 
 const suggestedQuestions = [
   "I'm looking for a 3-bedroom home near good schools",
-  "Show me modern apartments under $800K",
-  "What's available in downtown San Francisco?",
+  "Show me modern apartments under ₹3 Crore",
+  "What's available in Bandra West?",
   "I need a family home with a backyard",
 ];
 
@@ -78,7 +78,7 @@ export function AIChat() {
         const recs = dbProperties.slice(0, 2).map((p: any) => ({
           id: p.id,
           image: p.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-          price: p.price ? `$${p.price.toLocaleString()}` : "Contact Agent",
+          price: p.price ? `₹${p.price.toLocaleString('en-IN')}` : "Contact Agent",
           title: p.title,
           location: p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality"),
           beds: p.beds || 0,
@@ -115,7 +115,7 @@ export function AIChat() {
       const recs = dbProperties.slice(0, 2).map((p: any) => ({
         id: p.id,
         image: p.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
-        price: p.price ? `$${p.price.toLocaleString()}` : "Contact Agent",
+        price: p.price ? `₹${p.price.toLocaleString('en-IN')}` : "Contact Agent",
         title: p.title,
         location: p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality"),
         beds: p.beds || 0,

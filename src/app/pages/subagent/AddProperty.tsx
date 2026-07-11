@@ -522,7 +522,7 @@ export function AddProperty() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Price</p>
-                    <p className="font-medium text-gray-900">${formData.price || "Not set"}</p>
+                    <p className="font-medium text-gray-900">₹{formData.price || "Not set"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Locality</p>

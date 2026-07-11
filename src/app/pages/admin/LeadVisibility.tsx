@@ -39,7 +39,7 @@ export function LeadVisibility() {
           customer: lead.customer?.name || "Customer",
           customerEmail: lead.customer?.email || "",
           property: lead.property?.title || "Property",
-          propertyPrice: lead.property?.price ? `$${lead.property.price.toLocaleString()}` : "N/A",
+          propertyPrice: lead.property?.price ? `₹${lead.property.price.toLocaleString('en-IN')}` : "N/A",
           agent: lead.subagent?.name || "Unassigned",
           status: lead.status,
           createdAt: lead.createdAt,

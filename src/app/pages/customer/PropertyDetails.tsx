@@ -189,7 +189,7 @@ export function PropertyDetails() {
     ? property.media.map((m: any) => m.url)
     : ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"];
 
-  const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+  const formattedPrice = property.price ? `₹${property.price.toLocaleString('en-IN')}` : "Contact Agent";
   const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
   const amenities = property.amenities?.map((a: any) => a.amenity.name) || [];
   const hasGarage = amenities.some((name: string) => name.toLowerCase().includes("garage")) ? "Yes" : "No";
@@ -366,7 +366,7 @@ export function PropertyDetails() {
                         {property.price && (
                           <li className="flex items-start">
                             <CheckCircle2 className="size-5 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                            <span className="text-gray-700">Priced at ${property.price.toLocaleString()} within standard market valuation.</span>
+                            <span className="text-gray-700">Priced at ₹{property.price.toLocaleString('en-IN')} within standard market valuation.</span>
                           </li>
                         )}
                         {property.locality?.name && (
@@ -513,7 +513,7 @@ export function PropertyDetails() {
                       ? p.media[0].url 
                       : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200";
                     const simFormattedPrice = p.price 
-                      ? `$${p.price.toLocaleString()}` 
+                      ? `₹${p.price.toLocaleString('en-IN')}` 
                       : "Contact Agent";
                     const simPropertyLocation = p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality");
                     const isCustomerPortal = location.pathname.startsWith('/customer');

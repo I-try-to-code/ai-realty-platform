@@ -82,7 +82,7 @@ export function SavedProperties() {
                 ? property.media[0].url 
                 : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800";
               const formattedPrice = property.price 
-                ? `$${property.price.toLocaleString()}` 
+                ? `₹${property.price.toLocaleString('en-IN')}` 
                 : "Contact Agent";
               const propertyLocation = property.address || 
                 (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");

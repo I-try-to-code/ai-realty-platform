@@ -127,7 +127,7 @@ export function CustomerDashboard() {
             <div className="grid md:grid-cols-2 gap-6">
               {properties.map((property) => {
                 const imageUrl = property.media && property.media[0] ? property.media[0].url : "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800";
-                const formattedPrice = property.price ? `$${property.price.toLocaleString()}` : "Contact Agent";
+                const formattedPrice = property.price ? `₹${property.price.toLocaleString('en-IN')}` : "Contact Agent";
                 const propertyLocation = property.address || (property.locality ? `${property.locality.name}, ${property.locality.city}` : "Unknown Locality");
 
                 return (
@@ -228,7 +228,7 @@ export function CustomerDashboard() {
                 <Badge variant="ai" size="sm">Modern Architecture</Badge>
                 <Badge variant="ai" size="sm">3-4 Bedrooms</Badge>
                 <Badge variant="ai" size="sm">Good Schools</Badge>
-                <Badge variant="ai" size="sm">$800K - $900K</Badge>
+                <Badge variant="ai" size="sm">₹5 Cr - ₹10 Cr</Badge>
               </div>
               <Link to="/customer/ai-chat">
                 <Button variant="outline" size="sm" className="w-full mt-4">
