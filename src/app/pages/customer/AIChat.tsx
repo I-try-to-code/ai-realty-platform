@@ -44,9 +44,12 @@ export function AIChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [extractedPreferences, setExtractedPreferences] = useState<string[]>([]);
   const [dbProperties, setDbProperties] = useState<any[]>([]);
+  const [dbLoading, setDbLoading] = useState(true);
+  const [initialQueryProcessed, setInitialQueryProcessed] = useState(false);
 
   useEffect(() => {
     async function loadProperties() {
+      setDbLoading(true);
       try {
         const res = await fetch("/api/properties?status=ACTIVE");
         if (res.ok) {
@@ -55,10 +58,49 @@ export function AIChat() {
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        setDbLoading(false);
       }
     }
     loadProperties();
   }, []);
+
+  useEffect(() => {
+    if (!dbLoading && location.state?.initialQuery && !initialQueryProcessed) {
+      setInitialQueryProcessed(true);
+      const query = location.state.initialQuery;
+      
+      const userMessage: Message = { role: "user", content: query };
+      setMessages(prev => [...prev, userMessage]);
+      setIsTyping(true);
+
+      setTimeout(() => {
+        const recs = dbProperties.slice(0, 2).map((p: any) => ({
+          id: p.id,
+          image: p.media?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400",
+          price: p.price ? `$${p.price.toLocaleString()}` : "Contact Agent",
+          title: p.title,
+          location: p.address || (p.locality ? `${p.locality.name}, ${p.locality.city}` : "Unknown Locality"),
+          beds: p.beds || 0,
+          baths: p.baths || 0,
+          sqft: p.sqft || 0,
+          matchScore: 95,
+        }));
+
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: recs.length > 0
+            ? "Based on your requirements, I've scanned our active listings and found some excellent matches. Here are my top recommendations:"
+            : "I searched our listings catalog, but we don't have active properties matching those criteria right now. Let me know if you want to broaden your search!",
+          properties: recs,
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+        setExtractedPreferences(["Modern Architecture", "3-4 Bedrooms", "Good Schools", "Mumbai"]);
+        setIsTyping(false);
+      }, 1500);
+    }
+  }, [dbLoading, dbProperties, location.state, initialQueryProcessed]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -91,7 +133,7 @@ export function AIChat() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      setExtractedPreferences(["Modern Architecture", "3-4 Bedrooms", "Good Schools", "San Francisco"]);
+      setExtractedPreferences(["Modern Architecture", "3-4 Bedrooms", "Good Schools", "Mumbai"]);
       setIsTyping(false);
     }, 1500);
   };
